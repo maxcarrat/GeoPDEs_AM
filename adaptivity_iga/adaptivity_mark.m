@@ -71,7 +71,7 @@ switch adaptivity_data.mark_strategy
         index = find (cumsum (est2_ordered) > (1 - adaptivity_data.mark_param)^2 * est_sum2, 1, 'first');
         aux_marked(perm(1:index)) = 1;
     case 'GRAD'
-        aux_marked(est > adaptivity_data.tol) = 1;
+        aux_marked(est > 1e-05) = 1;
         
 end
 

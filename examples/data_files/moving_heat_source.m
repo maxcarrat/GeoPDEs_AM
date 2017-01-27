@@ -1,7 +1,8 @@
 function f = moving_heat_source
 
 
-f =@(x,y,t) 58.3e+04/(0.1*pi*0.15) * exp(-3*(x).^2/0.1^2 - 3*(y).^2/0.15^2);
+f =@(x,y,path_x,path_y)  3.0 * 58.3e+04/(pi * 0.015 * 0.010 ) * ...
+    exp(- 3*(x-path_x).^2/0.015^2 - 3*(y-path_y).^2/0.010^2 );
 
 
 

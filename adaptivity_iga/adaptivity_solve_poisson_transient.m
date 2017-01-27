@@ -49,6 +49,8 @@ function u = adaptivity_solve_poisson_transient (hmsh, hspace, time_step, proble
 
 stiff_mat = op_gradu_gradv_hier (hspace, hspace, hmsh, problem_data.c_diff);
 mass_mat = op_u_v_hier(hspace, hspace, hmsh, problem_data.c_cap);
+%lumped mass matrix
+mass_mat = diag(sum(mass_mat));
 rhs = op_f_v_time_hier (hspace, hmsh, problem_data, time_step);
 
 % Apply Neumann boundary conditions
@@ -94,11 +96,14 @@ if ~isempty(problem_data.h)
     lhs = mass_mat(int_dofs, int_dofs) - stiff_mat(int_dofs, int_dofs) * delta_t;
     u(int_dofs) =  lhs\ rhs(int_dofs);
 else
+    delta_t = problem_data.time_discretization(time_step+1) - problem_data.time_discretization(time_step);
+
     if ~isempty(hspace.dofs)
-        rhs = rhs + mass_mat * hspace.dofs;
+        rhs = rhs * delta_t + mass_mat * hspace.dofs;
+    else
+        rhs = rhs * delta_t ;
     end
     % Solve the linear system
-    delta_t = problem_data.time_discretization(time_step+1) - problem_data.time_discretization(time_step);
     lhs = mass_mat + stiff_mat * delta_t;
     u =  lhs\ rhs;
 end

@@ -57,9 +57,12 @@ function varargout = op_u_v_nl_hier (hspu, hspv, hmsh, coeff, u, u_0)
       end
       spu_lev = sp_evaluate_element_list (hspu.space_of_level(ilev), hmsh.msh_lev{ilev}, 'value', true);
       spv_lev = sp_evaluate_element_list (hspv.space_of_level(ilev), hmsh.msh_lev{ilev}, 'value', true);
-      
-      [eu, ~] = sp_eval_msh(u, spu_lev, hmsh.msh_lev{ilev});
-      [eu_old, ~] = sp_eval_msh(u_0, spu_lev, hmsh.msh_lev{ilev});
+            
+      [eu, ~] = hspace_eval_hmsh(u, hspu, hmsh);
+      [eu_old, ~] = hspace_eval_hmsh(u_0, hspu, hmsh);
+
+%       [eu, ~] = sp_eval_msh(u, spu_lev, hmsh.msh_lev{ilev});
+%       [eu_old, ~] = sp_eval_msh(u_0, spu_lev, hmsh.msh_lev{ilev});
       
       M_lev = op_u_v (spu_lev, spv_lev, hmsh.msh_lev{ilev}, coeff (eu, eu_old));
 

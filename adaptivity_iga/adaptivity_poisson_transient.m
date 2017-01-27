@@ -120,32 +120,71 @@ end
 [hmsh, hspace, geometry] = adaptivity_initialize_laplace (problem_data, method_data);
 % Initial solution
 number_ts = length(problem_data.time_discretization);
-u = zeros(hspace.ndof, 1);
+u = ones(hspace.ndof, 1)*problem_data.initial_temperature;
+u_last = u;
+hspace.dofs = u; 
+
+% ==POST-PROCESSING INITIAL PROBLEM====================================================
+if (plot_data.print_info)
+    fprintf('\n%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% Post-Process initial problem %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%\n');
+end
+% EXPORT VTK FILE
+if (plot_data.print_info); fprintf('\n VTK Post-Process'); end
+npts = [plot_data.npoints_x plot_data.npoints_y plot_data.npoints_z];
+output_file = sprintf(plot_data.file_name, 0);
+sp_to_vtk (hspace.dofs, hspace, geometry, npts(1:hmsh.rdim), output_file, {'solution'}, {'value'})
+
+% Plot in Octave/Matlab
+if (plot_data.plot_matlab)
+    if (plot_data.print_info); fprintf('\n Octave Post-Process'); end
+    [eu, F] = sp_eval (hspace.dofs, hspace, geometry, npts);
+    figure(1000 + 0); surf (squeeze(F(1,:,:)), squeeze(F(2,:,:)), squeeze(F(3,:,:)), eu)
+end
+
 
 % BACKWARD EULER LOOP
 for itime = 1:number_ts-1
     
     % Initialization of some auxiliary variables
-    if (plot_data.plot_hmesh)
-        fig_mesh = figure(1+itime);
+    if ~(isempty(find(plot_data.time_steps_to_post_process==itime, 1)))
+        if (plot_data.plot_hmesh)
+            fig_mesh = figure(1+itime);
+        end
+        %     if (plot_data.plot_discrete_sol)
+        %         fig_sol = figure(10000+itime);
+        %     end
     end
-%     if (plot_data.plot_discrete_sol)
-%         fig_sol = figure(10000+itime);
-%     end
-    
+ 
     if (plot_data.print_info)
         fprintf('\n%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% Time step %d %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%\n',itime);
     end
+%     
+%     % GEOMETRY-BASED REFINEMENT LOOP
+%     % refine toward vertex
+%     vertex = problem_data.path(itime, :);
+%     
+%     for iref = 1:adaptivity_data.max_level
+%         
+%         if (plot_data.print_info)
+%             fprintf('\n%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% Geometry-based refinement iteration %d %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%\n',iref);
+%         end
+%         
+%         if (plot_data.print_info); disp('MARK:'); end
+%         [marked, num_marked] = refine_toward_vertex (vertex, hmsh, hspace);
+%         if (plot_data.print_info);
+%             fprintf('%d %s marked for refinement \n', num_marked, adaptivity_data.flag);
+%             disp('REFINE')
+%         end
+%         
+%         % REFINE
+%         [hmsh, hspace, Cref] = adaptivity_refine (hmsh, hspace, marked, adaptivity_data);
+%         hspace.dofs = Cref * u;
+%         u = hspace.dofs;
+%         
+%     end % END GEOMETRY-BASED REFINEMENT LOOP
     
     % ADAPTIVE LOOP
-    iter = 0;
-    if itime == 1
-        number_of_adaptive_loop = adaptivity_data.num_max_iter;
-    else
-        number_of_adaptive_loop = adaptivity_data.num_max_iter;
-    end
-    
-    for iter = 1:number_of_adaptive_loop
+    for iter = 1:adaptivity_data.num_max_iter
         if (plot_data.print_info)
             fprintf('\n%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% Adaptivity iteration %d %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%\n',iter);
         end
@@ -171,13 +210,13 @@ for itime = 1:number_ts-1
         
         if (~(isempty(find(plot_data.time_steps_to_post_process==itime, 1))))
             if (plot_data.plot_hmesh)
-                fig_mesh = hmsh_plot_cells (hmsh, 10, (fig_mesh) );
+                fig_mesh = hmsh_plot_cells (hmsh, 20, (fig_mesh) );
             end
         end
         
         % ESTIMATE
         if (plot_data.print_info); fprintf('\n ESTIMATE: \n'); end
-        est = adaptivity_estimate_poisson_nl(u, itime, hmsh, hspace, problem_data, adaptivity_data);
+        est = adaptivity_estimate_poisson_nl(u, u_last, itime, hmsh, hspace, problem_data, adaptivity_data);
 %         est = adaptivity_estimate_gradient(u, itime, hmsh, hspace, problem_data, adaptivity_data);
         gest(iter) = norm (est);
         if (plot_data.print_info); fprintf('Computed error estimator: %f \n', gest(iter)); end
@@ -185,35 +224,92 @@ for itime = 1:number_ts-1
             [err_h1(iter), err_l2(iter), err_h1s(iter)] = sp_h1_error (hspace, hmsh, u(:,itime+1), problem_data.uex, problem_data.graduex);
             if (plot_data.print_info); fprintf('Error in H1 seminorm = %g\n', err_h1s(iter)); end
         end
-
-        % MARK
-        if (plot_data.print_info); disp('MARK:'); end
-        [marked, num_marked] = adaptivity_mark (est, hmsh, hspace, adaptivity_data);
-        if (plot_data.print_info);
-            fprintf('%d %s marked for refinement \n', num_marked, adaptivity_data.flag);
-            disp('REFINE')
-        end
-        
-        % REFINE
-        [hmsh, hspace, Cref] = adaptivity_refine (hmsh, hspace, marked, adaptivity_data);
-        
-        % Project the previous solution mesh onto the next refined mesh
-        if (plot_data.print_info); fprintf('\n Project old solution onto refined mesh'); end
-        hspace.dofs = Cref * u;
         
         % STOPPING CRITERIA
         if (gest(iter) < adaptivity_data.tol)
             disp('Success: The solution converge!!!');
+            hspace.dofs = u;
             break;
         elseif (hspace.ndof > adaptivity_data.max_ndof)
             disp('Warning: reached the maximum number of DOFs')
+            hspace.dofs = u;
             break;
         elseif (hmsh.nel > adaptivity_data.max_nel)
             disp('Warning: reached the maximum number of elements')
+            hspace.dofs = u; 
             break;
         end
         
+        % MARK
+        if (plot_data.print_info); disp('MARK:'); end
+        [marked_ref, num_marked_ref] = adaptivity_mark (est, hmsh, hspace, adaptivity_data);
+        [marked_coarse, num_marked_coarse] = adaptivity_mark (est, hmsh, hspace, adaptivity_data);
+
+        
+        % REFINE
+        if (plot_data.print_info);
+            fprintf('%d %s marked for refinement \n', num_marked_ref, adaptivity_data.flag);
+            disp('REFINE')
+        end
+        [hmsh, hspace, Cref] = adaptivity_refine (hmsh, hspace, marked_ref, adaptivity_data);
+       
+        % Project the previous solution mesh onto the next refined mesh
+        if (plot_data.print_info); fprintf('\n Project old solution onto refined mesh'); end
+
+        %project dof onto new mesh
+        hspace.dofs = Cref * u;
+        u = hspace.dofs;
+        %project last time step solution onto new mesh
+        u_last = Cref * u_last;
+        %project error estimation onto ew mesh
+        est = Cref * est;
+        
+        % COARSE
+        if (plot_data.print_info);
+            fprintf('%d %s marked for coarsening \n', num_marked_coarse, adaptivity_data.flag);
+            disp('COARSE')
+        end
+        if itime > 1
+            [hmsh, hspace, u] = adaptivity_coarsen (hmsh, hspace, u, marked_coarse, adaptivity_data);
+            [hmsh, hspace, u_last] = adaptivity_coarsen (hmsh, hspace, u_last, marked_coarse, adaptivity_data);
+            [hmsh, hspace, est] = adaptivity_coarsen (hmsh, hspace, est, marked_coarse, adaptivity_data);
+
+            % Project the previous solution mesh onto the next refined mesh
+            if (plot_data.print_info); fprintf('\n Project old solution onto coarsed mesh'); end
+            
+        end
+        
+        
+
+        
+        
+        if (plot_data.adaptivity)
+            % ==POST-PROCESSING====================================================
+            if (plot_data.print_info)
+                fprintf('\n%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% Post-Process adaptivity = %d %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%\n', iter);
+            end
+            % EXPORT VTK FILE
+            if (plot_data.print_info); fprintf('\n VTK Post-Process'); end
+            npts = [plot_data.npoints_x plot_data.npoints_y plot_data.npoints_z];
+            output_file = sprintf(plot_data.file_name, iter);
+            sp_to_vtk (hspace.dofs, hspace, geometry, npts(1:hmsh.rdim), output_file, {'solution', 'gradient'}, {'value', 'gradient'})
+            if strcmp(adaptivity_data.flag, 'functions')
+                output_file_est = sprintf(plot_data.file_name_err, iter);
+                sp_to_vtk (est, hspace, geometry, npts(1:hmsh.rdim), output_file_est, {'error'})
+            end
+            
+            % Plot in Octave/Matlab
+            if (plot_data.plot_matlab)
+                if (plot_data.print_info); fprintf('\n Octave Post-Process'); end
+                [eu, F] = sp_eval (hspace.dofs, hspace, geometry, npts);
+                figure(1000 + iter); surf (squeeze(F(1,:,:)), squeeze(F(2,:,:)), squeeze(F(3,:,:)), eu)
+            end
+        end
+        
     end % END ADAPTIVITY LOOP
+    
+    %update last time step solution
+    u_last = u;
     
     solution_data.iter = iter;
     solution_data.gest = gest(1:iter);
@@ -228,13 +324,17 @@ for itime = 1:number_ts-1
     if ~(isempty(find(plot_data.time_steps_to_post_process==itime, 1)))
         % ==POST-PROCESSING====================================================
         if (plot_data.print_info)
-            fprintf('\n%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% Post-Process %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%\n', itime);
+            fprintf('\n%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% Post-Process time step = %d %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%\n', itime);
         end
         % EXPORT VTK FILE
         if (plot_data.print_info); fprintf('\n VTK Post-Process'); end
-        npts = [51 51 51];
+        npts = [plot_data.npoints_x plot_data.npoints_y plot_data.npoints_z];
         output_file = sprintf(plot_data.file_name, itime);
-        sp_to_vtk (hspace.dofs, hspace, geometry, npts, output_file, {'solution', 'gradient'})
+        sp_to_vtk (hspace.dofs, hspace, geometry, npts(1:hmsh.rdim), output_file, {'solution', 'gradient'}, {'value', 'gradient'})
+        if strcmp(adaptivity_data.flag, 'functions')
+            output_file_est = sprintf(plot_data.file_name_err, itime);
+            sp_to_vtk (est, hspace, geometry, npts(1:hmsh.rdim), output_file_est, {'error'})
+        end
         
         % Plot in Octave/Matlab
         if (plot_data.plot_matlab)

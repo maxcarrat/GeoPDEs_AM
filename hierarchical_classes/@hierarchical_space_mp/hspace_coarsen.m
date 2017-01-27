@@ -79,7 +79,7 @@ end
 end
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-% function hspace = update_active_functions (hspace, hmsh, marked_funs, removed_cells)
+% function [hspace, C_coarse] = update_active_functions (hspace, hmsh, marked_funs, removed_cells)
 %
 % This function updates the active (hspace.active) and deactivated (hspace.deactivated) degrees of freedom,
 % reactivating the functions in marked_funs. 
@@ -91,6 +91,8 @@ end
 %           removed_cells{lev}: indices of cells of level lev that have been removed 
 %
 % Output:   hspace:    the coarsened space, an object of the class hierarchical_space_mp
+%           C_coarse: matrix to project the the original space onto the
+%           corsened space
 %
 % Copyright (C) 2015, 2016 Eduardo M. Garau, Rafael Vazquez
 %
@@ -112,7 +114,10 @@ function hspace = update_active_functions (hspace, hmsh, funs_to_reactivate, rem
 active = hspace.active;
 deactivated = hspace.deactivated;
 
+% LOOP OVER LEVELS
 for lev = hspace.nlevels:-1:2
+    
+  % Reactivate the marked functions of level lev
   if (strcmpi (hspace.type, 'standard') && ~isempty (removed_cells{lev}))
     removed_funs = sp_get_basis_functions (hspace.space_of_level(lev), hmsh.mesh_of_level(lev), removed_cells{lev});
     active{lev} = setdiff (active{lev}, removed_funs);
@@ -129,7 +134,8 @@ for lev = hspace.nlevels:-1:2
     children = setdiff (children, hspace_get_children (hspace, lev-1, deact_neighs));
     active{lev} = setdiff (active{lev}, children);
   end
-end
+end % END LOOP LEVELS
+
 
 hspace.active = active(1:hspace.nlevels);
 hspace.deactivated = deactivated(1:hspace.nlevels);

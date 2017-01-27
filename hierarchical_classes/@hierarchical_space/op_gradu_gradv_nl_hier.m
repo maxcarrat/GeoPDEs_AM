@@ -48,6 +48,7 @@ function varargout = op_gradu_gradv_nl_hier (hspu, hspv, hmsh, coeff, u)
 
   ndofs_u = 0;
   ndofs_v = 0;
+        
   for ilev = 1:hmsh.nlevels
     ndofs_u = ndofs_u + hspu.ndof_per_level(ilev);
     ndofs_v = ndofs_v + hspv.ndof_per_level(ilev);
@@ -59,8 +60,8 @@ function varargout = op_gradu_gradv_nl_hier (hspu, hspv, hmsh, coeff, u)
       
       spu_lev = sp_evaluate_element_list (hspu.space_of_level(ilev), hmsh.msh_lev{ilev}, 'value', true, 'gradient', true);
       spv_lev = sp_evaluate_element_list (hspv.space_of_level(ilev), hmsh.msh_lev{ilev}, 'value', true, 'gradient', true);
-      
-      [eu, ~] = sp_eval_msh(u, spu_lev, hmsh.msh_lev{ilev}); 
+            
+      [eu, ~] = hspace_eval_hmsh(u, hspu, hmsh);
       
       K_lev = op_gradu_gradv(spu_lev, spv_lev, hmsh.msh_lev{ilev}, coeff(eu));
 

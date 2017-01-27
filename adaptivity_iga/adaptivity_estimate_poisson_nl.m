@@ -52,7 +52,7 @@
 %    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 
-function est = adaptivity_estimate_poisson_nl (u, time_step, hmsh, hspace, problem_data, adaptivity_data)
+function est = adaptivity_estimate_poisson_nl (u, u_0, time_step, hmsh, hspace, problem_data, adaptivity_data)
 
 if (isfield(adaptivity_data, 'C0_est'))
     C0_est = adaptivity_data.C0_est;
@@ -65,24 +65,20 @@ num = ders{1};
 dernum = ders{2};
 der2num = ders{3};
 
-if ~isempty(hspace.dofs)
-    u_0 = hspace.dofs;
-else
-    u_0 = zeros(hspace.ndof,1);
-end 
 [ders_0, ~] = hspace_eval_hmsh (u_0, hspace, hmsh, {'value'});
 num_0 = ders_0{1};
 
 delta_t = problem_data.time_discretization(time_step+1)-problem_data.time_discretization(time_step);
 
 x = cell (hmsh.rdim, 1);
+path = cell (hmsh.rdim, 1);
 for idim = 1:hmsh.rdim;
     x{idim} = reshape (F(idim,:), [], hmsh.nel);
-    x{idim} =  x{idim} - ones(size(x{idim})).*problem_data.path(time_step, idim);
+    path{idim} = ones(size(x{idim})).*problem_data.path(time_step, idim);
 end
 
 aux = 0;
-valf = problem_data.f(x{:}, problem_data.time_discretization(time_step+1));
+valf = problem_data.f(x{:}, path{:});
 val_c_diff = problem_data.c_diff(num);
 val_c_cap = problem_data.c_cap(num, num_0);
 diff_time = (num - num_0)/delta_t;
@@ -90,8 +86,8 @@ if (isfield (problem_data, 'grad_c_diff'))
     val_grad_c_diff  = feval (problem_data.grad_c_diff, num);
     aux = reshape (sum (val_grad_c_diff .* dernum, 1), size(valf));
 end
-aux = (valf - val_c_cap.*diff_time + val_c_diff.*der2num + aux).^2; % size(aux) = [hmsh.nqn, hmsh.nel], interior residual at quadrature nodes
-normalized_aux = aux / norm(valf).^2;
+aux = (valf - val_c_cap .* diff_time + val_c_diff.*der2num + aux).^2; % size(aux) = [hmsh.nqn, hmsh.nel], interior residual at quadrature nodes
+normalized_aux = aux / max(max(aux));%.^2;
 switch adaptivity_data.flag
     case 'elements',
         w = [];
@@ -133,7 +129,7 @@ switch adaptivity_data.flag
             if (hmsh.nel_per_level(ilev) > 0)
                 ind_e = (Ne(ilev)+1):Ne(ilev+1);
                 sp_lev = sp_evaluate_element_list (hspace.space_of_level(ilev), hmsh.msh_lev{ilev}, 'value', true);
-                b_lev = op_f_v (sp_lev, hmsh.msh_lev{ilev}, aux(:,ind_e));
+                b_lev = op_f_v (sp_lev, hmsh.msh_lev{ilev}, normalized_aux(:,ind_e));
                 dofs = 1:ndofs;
                 est(dofs) = est(dofs) + hspace.Csub{ilev}.' * b_lev;
             end

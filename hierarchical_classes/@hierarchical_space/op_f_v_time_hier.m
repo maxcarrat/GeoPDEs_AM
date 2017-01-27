@@ -39,20 +39,19 @@
 function rhs = op_f_v_time_hier (hspace, hmsh, problem_data, time_step)
 
 rhs = zeros (hspace.ndof, 1);
-t = problem_data.time_discretization(time_step);
 ndofs = 0;
 
 for ilev = 1:hmsh.nlevels
     ndofs = ndofs + hspace.ndof_per_level(ilev);
     if (hmsh.nel_per_level(ilev) > 0)
         x = cell (hmsh.rdim, 1);
-        for idim = 1:2
+        path = cell (hmsh.rdim, 1);
+        for idim = 1:hmsh.rdim
             x{idim} = reshape (hmsh.msh_lev{ilev}.geo_map(idim,:,:), hmsh.mesh_of_level(ilev).nqn, hmsh.nel_per_level(ilev));
-            x{idim} =  x{idim} - ones(size(x{idim})).*problem_data.path(time_step, idim);
+            path{idim} = ones(size(x{idim})).*problem_data.path(time_step, idim);
         end
-        x{3} = ones(size(x{idim})).*problem_data.path(time_step, idim);
         sp_lev = sp_evaluate_element_list (hspace.space_of_level(ilev), hmsh.msh_lev{ilev}, 'value', true);
-        b_lev = op_f_v (sp_lev, hmsh.msh_lev{ilev}, problem_data.f(x{:}, t));
+        b_lev = op_f_v (sp_lev, hmsh.msh_lev{ilev}, problem_data.f(x{:}, path{:}));
         
         dofs = 1:ndofs;
         rhs(dofs) = rhs(dofs) + hspace.Csub{ilev}.' * b_lev;

@@ -36,13 +36,14 @@ end
 dernum = ders{1};
 
 x = cell (hmsh.rdim, 1);
+path = cell (hmsh.rdim, 1);
 for idim = 1:hmsh.rdim;
     x{idim} = reshape (F(idim,:), [], hmsh.nel);
-    x{idim} =  x{idim} - ones(size(x{idim})).*problem_data.path(time_step, idim);
+    path{idim} =  ones(size(x{idim})).*problem_data.path(time_step, idim);
 end
 
-valf = problem_data.f(x{:}, problem_data.time_discretization(time_step+1));
-aux = reshape (sum (C0_est .* dernum, 1), size(valf)).^2;
+valf = problem_data.f(x{:}, path{:});
+aux = reshape (sum (C0_est .* dernum, 1) ./ max(max(max(dernum))), size(valf)).^2;
 
 w = [];
 h = [];
