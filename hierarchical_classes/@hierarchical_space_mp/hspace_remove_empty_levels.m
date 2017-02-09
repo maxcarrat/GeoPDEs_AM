@@ -30,7 +30,7 @@
 
 function hspace = hspace_remove_empty_levels (hspace, hmsh)
 
-if (~isempty (hmsh.boundary))
+if (~isempty (hmsh.boundary) && ~isequal(hmsh.boundary.ndim,0))
   for iside = 1:numel(hmsh.boundary)
     hmsh.boundary(iside) = hmsh_remove_empty_levels (hmsh.boundary(iside));
     hspace.boundary(iside) = hspace_remove_empty_levels (hspace.boundary(iside), hmsh.boundary(iside));

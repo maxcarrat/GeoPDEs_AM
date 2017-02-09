@@ -68,6 +68,8 @@ while (norm(res) > problem_data.Newton_tol)
     
     stiff_mat = op_gradu_gradv_nl_hier (hspace, hspace, hmsh, problem_data.c_diff, u);
     mass_mat = op_u_v_nl_hier(hspace, hspace, hmsh, problem_data.c_cap, u, u_0);
+    %lumped mass matrix
+    mass_mat = diag(sum(mass_mat));
     rhs = op_f_v_time_hier (hspace, hmsh, problem_data, time_step);
     
     % Apply Neumann boundary conditions

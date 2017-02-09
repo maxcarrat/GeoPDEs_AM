@@ -15,7 +15,6 @@
 %           GERS: guaranteed error reduction strategy (Dörfler's),
 %           MS:   maximum strategy,
 %           GR:   global (uniform) refinement,
-%           GRAD: gradient based refinement strategy.
 %      -mark_param:    parameter for marking, 0 < mark_param < 1.
 %      -flag:          elements or functions, according to est
 %
@@ -70,8 +69,6 @@ switch adaptivity_data.mark_strategy
         [est2_ordered, perm] = sort (est.^2, 'descend');
         index = find (cumsum (est2_ordered) > (1 - adaptivity_data.mark_param)^2 * est_sum2, 1, 'first');
         aux_marked(perm(1:index)) = 1;
-    case 'GRAD'
-        aux_marked(est > 1e-05) = 1;
         
 end
 

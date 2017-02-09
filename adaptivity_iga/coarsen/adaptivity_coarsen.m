@@ -35,23 +35,28 @@
 %    You should have received a copy of the GNU General Public License
 %    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-function [hmsh, hspace, u] = adaptivity_coarsen (hmsh, hspace, u, marked, adaptivity_data)
+function [hmsh, hspace, C_coarse] = adaptivity_coarsen (hmsh, hspace, marked, adaptivity_data)
+
 
 switch (adaptivity_data.flag)
-  case 'functions'
-    marked_elements = compute_cells_to_reactivate (hspace, hmsh, marked);
-  case 'elements'
-    marked_elements = marked;
+    case 'functions'
+%         [reactivated_fun, ~] = active2deactivated_marking(marked, hmsh, hspace, adaptivity_data);
+        marked_elements = compute_cells_to_reactivate (hspace, hmsh, marked);
+    case 'elements'
+        marked_elements = marked;
 end
 
-[hmsh, removed_cells] = hmsh_coarsen (hmsh, marked_elements);
+% [marked_elements, ~] = compute_cells_to_reactivate (hspace, hmsh, reactivated_fun);
 
-reactivated_fun = functions_to_reactivate_from_cells (hmsh, hspace, marked_elements);
+[reactivated_elements, ~] = active2deactivated_marking(marked_elements, hmsh, hspace, adaptivity_data);
+reactivated_fun = functions_to_reactivate_from_cells (hmsh, hspace, reactivated_elements);
+
+[hmsh, removed_cells] = hmsh_coarsen (hmsh, reactivated_elements);
 
 if (nargout == 3)
-    [hspace, u] = hspace_coarsen (hspace, hmsh, u, reactivated_fun, removed_cells);
+    [hspace, C_coarse] = hspace_coarsen (hspace, hmsh, reactivated_fun, removed_cells);
 else
-    hspace = hspace_coarsen (hspace, hmsh, u, reactivated_fun, removed_cells);
+    hspace = hspace_coarsen (hspace, hmsh, reactivated_fun, removed_cells);
 end
 
 hmsh = hmsh_remove_empty_levels (hmsh);

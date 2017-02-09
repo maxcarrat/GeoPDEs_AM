@@ -138,7 +138,13 @@ sp_to_vtk (hspace.dofs, hspace, geometry, npts(1:hmsh.rdim), output_file, {'solu
 if (plot_data.plot_matlab)
     if (plot_data.print_info); fprintf('\n Octave Post-Process'); end
     [eu, F] = sp_eval (hspace.dofs, hspace, geometry, npts);
-    figure(1000 + 0); surf (squeeze(F(1,:,:)), squeeze(F(2,:,:)), squeeze(F(3,:,:)), eu)
+    if numel(npts) == 1
+        figure(1000 + 0); plot (squeeze(F(1,:,:)), eu)
+    elseif numel(npts) == 2
+        figure(1000 + 0); surf (squeeze(F(1,:,:)), squeeze(F(2,:,:)), eu)
+    else
+        figure(1000 + 0); surf (squeeze(F(1,:,:)), squeeze(F(2,:,:)), squeeze(F(3,:,:)), eu)
+    end
 end
 
 
@@ -158,30 +164,7 @@ for itime = 1:number_ts-1
     if (plot_data.print_info)
         fprintf('\n%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% Time step %d %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%\n',itime);
     end
-%     
-%     % GEOMETRY-BASED REFINEMENT LOOP
-%     % refine toward vertex
-%     vertex = problem_data.path(itime, :);
-%     
-%     for iref = 1:adaptivity_data.max_level
-%         
-%         if (plot_data.print_info)
-%             fprintf('\n%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% Geometry-based refinement iteration %d %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%\n',iref);
-%         end
-%         
-%         if (plot_data.print_info); disp('MARK:'); end
-%         [marked, num_marked] = refine_toward_vertex (vertex, hmsh, hspace);
-%         if (plot_data.print_info);
-%             fprintf('%d %s marked for refinement \n', num_marked, adaptivity_data.flag);
-%             disp('REFINE')
-%         end
-%         
-%         % REFINE
-%         [hmsh, hspace, Cref] = adaptivity_refine (hmsh, hspace, marked, adaptivity_data);
-%         hspace.dofs = Cref * u;
-%         u = hspace.dofs;
-%         
-%     end % END GEOMETRY-BASED REFINEMENT LOOP
+    
     
     % ADAPTIVE LOOP
     for iter = 1:adaptivity_data.num_max_iter
@@ -189,10 +172,10 @@ for itime = 1:number_ts-1
             fprintf('\n%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% Adaptivity iteration %d %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%\n',iter);
         end
         
-        if (~hspace_check_partition_of_unity (hspace, hmsh))
-            disp('ERROR: The partition-of-the-unity property does not hold.')
-            solution_data.flag = -1; break
-        end
+%         if (~hspace_check_partition_of_unity (hspace, hmsh))
+%             disp('ERROR: The partition-of-the-unity property does not hold.')
+%             solution_data.flag = -1; break
+%         end
         
         % SOLVE AND PLOT
         if (plot_data.print_info)
@@ -227,15 +210,19 @@ for itime = 1:number_ts-1
         
         % STOPPING CRITERIA
         if (gest(iter) < adaptivity_data.tol)
-            disp('Success: The solution converge!!!');
+            if (plot_data.print_info); disp('Success: The solution converge!!!'); end;
             hspace.dofs = u;
             break;
         elseif (hspace.ndof > adaptivity_data.max_ndof)
-            disp('Warning: reached the maximum number of DOFs')
+            if (plot_data.print_info); disp('Warning: reached the maximum number of DOFs'); end;
             hspace.dofs = u;
             break;
         elseif (hmsh.nel > adaptivity_data.max_nel)
-            disp('Warning: reached the maximum number of elements')
+            if (plot_data.print_info); disp('Warning: reached the maximum number of elements'); end;
+            hspace.dofs = u; 
+            break;
+         elseif (iter >= adaptivity_data.num_max_iter)
+            if (plot_data.print_info); disp('Warning: reached the maximum number of iterations'); end;
             hspace.dofs = u; 
             break;
         end
@@ -243,7 +230,7 @@ for itime = 1:number_ts-1
         % MARK
         if (plot_data.print_info); disp('MARK:'); end
         [marked_ref, num_marked_ref] = adaptivity_mark (est, hmsh, hspace, adaptivity_data);
-        [marked_coarse, num_marked_coarse] = adaptivity_mark (est, hmsh, hspace, adaptivity_data);
+        [marked_coarse, num_marked_coarse] = marking_for_coarsening (est, hmsh, hspace, adaptivity_data); 
 
         
         % REFINE
@@ -252,17 +239,19 @@ for itime = 1:number_ts-1
             disp('REFINE')
         end
         [hmsh, hspace, Cref] = adaptivity_refine (hmsh, hspace, marked_ref, adaptivity_data);
-       
+        
         % Project the previous solution mesh onto the next refined mesh
-        if (plot_data.print_info); fprintf('\n Project old solution onto refined mesh'); end
-
-        %project dof onto new mesh
+        if (plot_data.print_info); fprintf('\n Project old solution onto refined mesh \n'); end
+        
+        % project dof onto new mesh
         hspace.dofs = Cref * u;
         u = hspace.dofs;
-        %project last time step solution onto new mesh
+        % project last time step solution onto new mesh
         u_last = Cref * u_last;
-        %project error estimation onto ew mesh
-        est = Cref * est;
+        % project error estimation onto new mesh
+        if strcmp(adaptivity_data.flag, 'functions')
+            est = Cref * est;
+        end;
         
         % COARSE
         if (plot_data.print_info);
@@ -270,13 +259,20 @@ for itime = 1:number_ts-1
             disp('COARSE')
         end
         if itime > 1
-            [hmsh, hspace, u] = adaptivity_coarsen (hmsh, hspace, u, marked_coarse, adaptivity_data);
-            [hmsh, hspace, u_last] = adaptivity_coarsen (hmsh, hspace, u_last, marked_coarse, adaptivity_data);
-            [hmsh, hspace, est] = adaptivity_coarsen (hmsh, hspace, est, marked_coarse, adaptivity_data);
-
-            % Project the previous solution mesh onto the next refined mesh
-            if (plot_data.print_info); fprintf('\n Project old solution onto coarsed mesh'); end
+            [hmsh, hspace, Ccoarse] = adaptivity_coarsen (hmsh, hspace, marked_coarse, adaptivity_data);
             
+            % Project the previous solution mesh onto the next refined mesh
+            if (plot_data.print_info); fprintf('\n Project old solution onto coarsed mesh \n'); end
+            
+            % project dof onto new mesh
+            hspace.dofs = Ccoarse * u;
+            u = hspace.dofs;
+            % project last time step solution onto new mesh
+            u_last = Ccoarse * u_last;
+            % project error estimation onto ew mesh
+            if strcmp(adaptivity_data.flag, 'functions')
+                est = Ccoarse * est;
+            end;
         end
         
         
@@ -302,7 +298,13 @@ for itime = 1:number_ts-1
             if (plot_data.plot_matlab)
                 if (plot_data.print_info); fprintf('\n Octave Post-Process'); end
                 [eu, F] = sp_eval (hspace.dofs, hspace, geometry, npts);
-                figure(1000 + iter); surf (squeeze(F(1,:,:)), squeeze(F(2,:,:)), squeeze(F(3,:,:)), eu)
+                if numel(hmsh.rdim) == 1
+                    figure(1000 + 0); plot (squeeze(F(1,:,:)), eu)
+                elseif numel(hmsh.rdim) == 2
+                    figure(1000 + 0); surf (squeeze(F(1,:,:)), squeeze(F(2,:,:)), eu)
+                else
+                    figure(1000 + 0); surf (squeeze(F(1,:,:)), squeeze(F(2,:,:)), squeeze(F(3,:,:)), eu)
+                end
             end
         end
         
@@ -326,21 +328,27 @@ for itime = 1:number_ts-1
         if (plot_data.print_info)
             fprintf('\n%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% Post-Process time step = %d %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%\n', itime);
         end
-        % EXPORT VTK FILE
-        if (plot_data.print_info); fprintf('\n VTK Post-Process'); end
-        npts = [plot_data.npoints_x plot_data.npoints_y plot_data.npoints_z];
-        output_file = sprintf(plot_data.file_name, itime);
-        sp_to_vtk (hspace.dofs, hspace, geometry, npts(1:hmsh.rdim), output_file, {'solution', 'gradient'}, {'value', 'gradient'})
-        if strcmp(adaptivity_data.flag, 'functions')
-            output_file_est = sprintf(plot_data.file_name_err, itime);
-            sp_to_vtk (est, hspace, geometry, npts(1:hmsh.rdim), output_file_est, {'error'})
-        end
-        
+%         % EXPORT VTK FILE
+%         if (plot_data.print_info); fprintf('\n VTK Post-Process'); end
+%         npts = [plot_data.npoints_x plot_data.npoints_y plot_data.npoints_z];
+%         output_file = sprintf(plot_data.file_name, itime);
+%         sp_to_vtk (hspace.dofs, hspace, geometry, npts(1:hmsh.rdim), output_file, {'solution', 'gradient'}, {'value', 'gradient'})
+%         if strcmp(adaptivity_data.flag, 'functions')
+%             output_file_est = sprintf(plot_data.file_name_err, itime);
+%             sp_to_vtk (est, hspace, geometry, npts(1:hmsh.rdim), output_file_est, {'error'})
+%         end
+%         
         % Plot in Octave/Matlab
         if (plot_data.plot_matlab)
             if (plot_data.print_info); fprintf('\n Octave Post-Process'); end
             [eu, F] = sp_eval (hspace.dofs, hspace, geometry, npts);
-            figure(1000 + itime); surf (squeeze(F(1,:,:)), squeeze(F(2,:,:)), squeeze(F(3,:,:)), eu)
+            if numel(hmsh.rdim) == 1
+                figure(1000 + itime); plot (squeeze(F(1,:,:)), eu)
+            elseif numel(hmsh.rdim) == 2
+                figure(1000 + itime); surf (squeeze(F(1,:,:)), squeeze(F(2,:,:)), eu)
+            else
+                figure(1000 + itime); surf (squeeze(F(1,:,:)), squeeze(F(2,:,:)), squeeze(F(3,:,:)), eu)
+            end
         end
     end
 end % END BACKWARD EULER LOOP

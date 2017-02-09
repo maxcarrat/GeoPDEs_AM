@@ -82,7 +82,7 @@ nlevels = hmsh.nlevels;
 removed_cells = cell (nlevels, 1);
 
 for lev = nlevels-1:-1:1
-  removed_cells{lev+1} = hmsh_get_children (hmsh, lev, M{lev});
+  removed_cells{lev+1} =  hmsh_get_children (hmsh, lev, M{lev});
   hmsh.active{lev+1} = setdiff (hmsh.active{lev+1}, removed_cells{lev+1});
   hmsh.deactivated{lev} = setdiff (hmsh.deactivated{lev}, M{lev});
   hmsh.active{lev} = union (hmsh.active{lev}, M{lev});
