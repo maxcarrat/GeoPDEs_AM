@@ -6,43 +6,20 @@
 %
 %
 %                          Initial Mesh
-%                * * * * * * * * * * * * * * * *  * 
-%                *       *       *        *       *
-%                *       *       *        *       *
-%                *       *       *        *       *
-%                * * * * * * * * * * * * * * * *  * 
-%                *       *       *        *       *
-%                *       *       *        *       *
-%                *       *       *        *       *
-%                * * * * * * * * * * * * * * * *  * 
-%                *               *                *
-%                *               *                *
-%                *               *                *
-%                *               *                *
-%                *               *                *
-%                *               *                *
-%                *               *                *
-%                * * * * * * * * * * * * * * * *  * 
+           
+%           
+%               *+++++++++*++++++++*+++++++++*+++++++++*
+%
+%               *++++++++++++++++++*+++++++++++++++++++*
 %
 %                         Refined Mesh
 %
-%                * * * * * * * * * * * * * * * * *
-%                *   *   *   *   *   *   *   *   *
-%                * * * * * * * * * * * * * * * * *
-%                *   *   *   *   *   *   *   *   *
-%                * * * * * * * * * * * * * * * * *
-%                *   *   *   *   *   *   *   *   *
-%                * * * * * * * * * * * * * * * * *
-%                *   *   *   *   *   *   *   *   *
-%                * * * * * * * * * * * * * * * * *
-%                *       *       *               *
-%                *       *       *               *
-%                *       *       *               *
-%                * * * * * * * * *               *
-%                *       *       *               *
-%                *       *       *               *
-%                *       *       *               *
-%                * * * * * * * * * * * * * * * * *
+%               
+%                                  *++++*++++*++++*++++*             
+%           
+%               *+++++++++*++++++++*+++++++++*+++++++++*
+%
+%               *++++++++++++++++++*+++++++++++++++++++*
 %
 % Coarsening the mesh back to the initial configuration has to return the
 % initial values
@@ -67,17 +44,17 @@ clear problem_data
 close all
 clc
 % Initial domain, defined as NURBS map given in a text file
-problem_data.geo_name = 'geo_square.txt';
+problem_data.geo_name = nrbline ([0 0], [0.5 0]);
 
 % CHOICE OF THE DISCRETIZATION PARAMETERS (Initial mesh)
 clear method_data
-method_data.degree      = [2 2];        % Degree of the splines
-method_data.regularity  = [1 1];        % Regularity of the splines
-method_data.nsub_coarse = [2 2];        % Number of subdivisions of the coarsest mesh, with respect to the mesh in geometry
-method_data.nsub_refine = [2 2];        % Number of subdivisions for each refinement
-method_data.nquad       = [3 3];        % Points for the Gaussian quadrature rule
-method_data.space_type  = 'standard';   % 'simplified' (only children functions) or 'standard' (full basis)
-method_data.truncated   = 1;            % 0: False, 1: True
+method_data.degree      = 2;                % Degree of the splines
+method_data.regularity  = 1;                % Regularity of the splines
+method_data.nsub_coarse = 2;                % Number of subdivisions of the coarsest mesh, with respect to the mesh in geometry
+method_data.nsub_refine = 2;                % Number of subdivisions for each refinement
+method_data.nquad       = 3;                % Points for the Gaussian quadrature rule
+method_data.space_type  = 'standard';       % 'simplified' (only children functions) or 'standard' (full basis)
+method_data.truncated   = 1;                % 0: False, 1: True
 
 % ADAPTIVITY PARAMETERS
 clear adaptivity_data
@@ -100,7 +77,7 @@ plot_data.plot_discrete_sol = false;
 plot_data.print_info = false;
 plot_data.plot_matlab = false;
 plot_data.npoints_x = 100;       %number of points x-direction in post-processing
-plot_data.npoints_y = 100;       %number of points y-direction in post-processing
+plot_data.npoints_y = 1;       %number of points y-direction in post-processing
 plot_data.npoints_z = 1;        %number of points z-direction in post-processing
 
 %% Generate the first level of initial mesh
@@ -119,7 +96,7 @@ hspace   = hierarchical_space (hmsh, space, method_data.space_type, method_data.
 %% Add second and thrid level using THB-refinement
 % Second level
 marked_ref = cell(1, hspace.nlevels);
-marked_ref{1} = [1 3 4];
+marked_ref{1} = [1 2];
 [hmsh, hspace, ~] = adaptivity_refine (hmsh, hspace, marked_ref, adaptivity_data);
 hmsh_plot_cells (hmsh, 20, 1 );
 
@@ -133,46 +110,40 @@ hmsh.mesh_of_level(hmsh.nlevels) = msh_refine (hmsh.mesh_of_level(hmsh.nlevels-1
 hmsh.msh_lev{hmsh.nlevels} = [];
 
 % assign dofs
-v1 = [1 1.0 1.0 1.0 1 1 1]';
-v2 = [1.0 1.1 1.1 1.1 1.3]';
-v3 = [1.75 1.4 0.8 1.5 1.75]';
-v4 = v3*1.5;
-
-
-hspace.dofs = cat(1, v1, v2, v3, v4, v2, [1.4, 2]');
+hspace.dofs = [0 1.2 0.8 1.4 0.75 0.25]';
 initial_values = hspace.dofs;
 
 % plot initial state
-npts = [plot_data.npoints_x plot_data.npoints_y ];
+npts = [plot_data.npoints_x];
 [eu, F] = sp_eval (initial_values, hspace, geometry, npts);
-figure(4); surf (squeeze(F(1,:,:)), squeeze(F(2,:,:)), eu)
+figure(4); plot (squeeze(F(1,:,:)), eu)
 
 %% Refinement
 marked_ref{1} = [];
-marked_ref{2} = [9 10 11 12 13 14 15 16];
+marked_ref{2} = [3 4];
 marked_ref{3} = [];
 [hmsh, hspace, Cref] = adaptivity_refine (hmsh, hspace, marked_ref, adaptivity_data);
 hmsh_plot_cells (hmsh, 20, (figure(2)));
 hspace.dofs = Cref*initial_values;
 
 % plot refined state
-npts = [plot_data.npoints_x plot_data.npoints_y ];
+npts = [plot_data.npoints_x];
 [eu, F] = sp_eval (hspace.dofs, hspace, geometry, npts);
-figure(5); surf (squeeze(F(1,:,:)), squeeze(F(2,:,:)), eu)
+figure(5); plot (squeeze(F(1,:,:)), eu)
 
 
 %% Coarsening back to the initial state
 marked_coarse{1} = [];
 marked_coarse{2} = [];
-marked_coarse{3} = linspace(33,64,32);
+marked_coarse{3} = [5 6 7 8];
 [hmsh, hspace, u] = adaptivity_coarsen(hmsh, hspace, marked_coarse, adaptivity_data);
 hmsh_plot_cells (hmsh, 20, (figure(3)));
 
 
 % plot coarse state
-npts = [plot_data.npoints_x plot_data.npoints_y];
+npts = [plot_data.npoints_x];
 [eu, F] = sp_eval (u, hspace, geometry, npts);
-figure(6); plot (squeeze(F(1,:,:)), squeeze(F(2,:,:)), eu)
+figure(6); plot (squeeze(F(1,:,:)), eu)
 
 
 %% Check

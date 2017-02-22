@@ -1,4 +1,4 @@
-function [ B ] = bzrproj_href(  p, C_source, C_target )
+function [ B ] = bzrproj_href(  p, C_source, C_target, n_sub )
 %BZRPROJ_HREF:  Bézier projection operator (h-refinement)
 % This projection operator returns the global h/2 refinement of an
 % univariate B-spline patch.
@@ -11,6 +11,7 @@ function [ B ] = bzrproj_href(  p, C_source, C_target )
 %      p                     - polynomial degree
 %      C_source              - Bézier extraction operator of the source (coarse) mesh
 %      C_target              - Bézier extraction operator of the target (fine) mesh
+%      n_sub                 - number of children of each element
 %
 %    OUTPUT:
 %
@@ -43,8 +44,6 @@ function [ B ] = bzrproj_href(  p, C_source, C_target )
 ndofs_source = size(C_source, 3)+(p-1);         % number of functions of the source mesh
 ndofs_target = size(C_target, 3)+(p-1);         % number of functions of the target mesh
 nel_source = ndofs_source - p;                  % number of elements of the source mesh
-nel_target = ndofs_target - p;                  % number of elements of the target mesh
-n_sub = nel_target/nel_source;                  % number of target elements per source element
 
 % initialize global Bézier projection operator
 B = sparse(ndofs_target, ndofs_source);

@@ -1,4 +1,4 @@
-function [ B ] = bzrproj_el_hcoarse( p, C_source, R_target, h_source, h_target, taget_el_bound_vec, index_source_element_vec )
+function [ B ] = bzrproj_el_hcoarse( p, C_source, R_target, h_source, h_target, index_source_element_vec )
 %BZRPROJ_EL_HCOARSE:  Bézier projection operator (h-coarsening)
 % This projection operator project n elements of a source mesh onto
 % an element of a target mesh. The resulting control values have to be 
@@ -14,7 +14,6 @@ function [ B ] = bzrproj_el_hcoarse( p, C_source, R_target, h_source, h_target, 
 %      R_target                 - spline reconstruction operator of the target element (inverse of extraction operator)
 %      h_source                 - element size of the source mesh
 %      h_target                 - element size of the target mesh
-%      taget_el_bound_vec       - vector of target element boundaries
 %      index_source_element_vec - vector of index source elements
 %
 %    OUTPUT:
@@ -62,7 +61,6 @@ phi = h_source/h_target;
 % loop over elements of the source mesh
 for i=1:n
     % transformation matrix from [-1, 1] to taget element boundaries
-%     A_inv = inv(brnsttransf(taget_el_bound_vec(i,1), taget_el_bound_vec(i,2), p));
 	A = brnsttransf(xi(i), xi(i+1), p);
     % projection operator
     B(:,:,i) = R_target(:,:)' * phi*G_inv*A'*G * C_source(:,:,index_source_element_vec(i))';

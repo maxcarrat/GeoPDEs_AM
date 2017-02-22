@@ -38,7 +38,7 @@ hold on;
 grid on;
 
 %% Bézier projection element level-----------------------------------------
-% construct the Bézier extraction operator for the sourec and the target
+% construct the Bézier extraction operator for the source and the target
 % mesh
 
 target_knots = [0 0 0 1/2 3/4 1 1 1];
@@ -49,19 +49,21 @@ C_refined = bzrextr(refined_knots, p);
 complete_contolpoints = cat(2, [0 0 0 0 0]', [1 1 1 1 1]');
 
 % project control values of the source mesh onto the target mesh
-B_1 =  bzrproj_el_hcoarse( p, C, inv(C_coarse(:,:,1)), 1/4, 1/2, cat(1, [-1, 3], [-3, 1]), [1 2] );
-B_2 =  bzrproj_el_hcoarse( p, C, inv(C_coarse(:,:,2)), 1/4, 1/2, cat(1, [-1, 3], [-3, 1]), [3 4] );
+B_1 =  bzrproj_el_hcoarse( p, C, inv(C_coarse(:,:,1)), 1/4, 1/2, [1 2] );
+B_2 =  bzrproj_el_hcoarse( p, C, inv(C_coarse(:,:,2)), 1/4, 1/4, 3 );
+B_3 =  bzrproj_el_hcoarse( p, C, inv(C_coarse(:,:,3)), 1/4, 1/4, 4 );
 
 % new Bézier elements control points
 new_control_point_e1 = B_1(:,:,1) * crv.coefs(1:2, 1:3)' + B_1(:,:,2) * crv.coefs(1:2, 2:4)';
-new_control_point_e2 = B_2(:,:,1) * crv.coefs(1:2, 3:5)' + B_2(:,:,2) * crv.coefs(1:2, 4:6)';
+new_control_point_e2 = B_2(:,:,1) * crv.coefs(1:2, 3:5)';
+new_control_point_e3 = B_3(:,:,1) * crv.coefs(1:2, 4:6)';
 
 % smoothing using local least square weights
 new_control_points(1,:) = new_control_point_e1(1,:);
-new_control_points(2,:) = new_control_point_e1(2,:); %  1/2 * new_control_point_e1(2,:) + 1/2 * new_control_point_e2(1,:);
-new_control_points(3,:) = new_control_point_e1(3,:); %  1/2 * new_control_point_e1(3,:) + 1/2 * new_control_point_e2(2,:);
-new_control_points(4,:) = controlPoints(:,5)';
-new_control_points(5,:) = controlPoints(:,6)';
+new_control_points(2,:) = 1/2 * new_control_point_e1(2,:) + 1/2 * new_control_point_e2(1,:);
+new_control_points(3,:) = 1/3 * new_control_point_e1(3,:) + 1/3 * new_control_point_e2(2,:) + 1/3 * new_control_point_e3(1,:);
+new_control_points(4,:) = 1/2 * new_control_point_e2(3,:) + 1/2 * new_control_point_e3(2,:);
+new_control_points(5,:) = new_control_point_e3(3,:);
 
 
 % make B-spline
@@ -79,11 +81,7 @@ C_coarse = bzrextr(target_knots, p);
 complete_contolpoints = cat(2, [0 0 0 0 0]', [1 1 1 1 1]');
 
 % project control values of the source mesh onto the target mesh
-B_coarse =  bzrproj_hcoarse( p, C, C_coarse,  cat(1, [-1, 3], [-3, 1]));
-
-% refine back to the original mesh
-% B_ref = basiskntins (p,target_knots,source_knots);
-B_ref =  bzrproj_href( p, C, C_refined);
+B_coarse =  bzrproj_hcoarse( p, C, C_coarse, 2);
 
 new_control_points = B_coarse * controlPoints';
 new_control_points(3:5,:) = new_control_points(1:3,:);
@@ -95,6 +93,10 @@ pcrv = nrbmak((cat(2, new_control_points, complete_contolpoints))', target_knots
 
 % plot
 nrbplot(pcrv, 200);
+
+% refine back to the original mesh
+% B_ref = basiskntins (p,target_knots,source_knots);
+B_ref =  bzrproj_href( p, C, C_refined, 2);
 
 % h-refinement
 ref_control_points = B_ref * controlPoints';
@@ -108,7 +110,7 @@ nrbplot(rcrv, 200);
 %% Test Projector ---------------------------------------------------------
 
 % Check if B_coares is the left inverse odf B_ref_test
-B_ref_test =  bzrproj_href( p, C_coarse, C);
+B_ref_test =  bzrproj_href(p, C_coarse, C, 2);
 Id = B_coarse*B_ref_test;
 
 if (~isequal(normest(Id), 1))
@@ -121,7 +123,7 @@ ref_test_control_points = B_ref_test * new_control_points;
 tcrv = nrbmak((cat(2, ref_test_control_points, [0 0 0 0 0 0]', [1 1 1 1 1 1]'))', source_knots);
 
 % project control values of the source mesh onto the target mesh
-B_coarse_test =  bzrproj_hcoarse( p, C_refined, C,  cat(1, [-1, 3], [-3, 1]));
+B_coarse_test =  bzrproj_hcoarse( p, C_refined, C);
 
 coarse_test_control_points = B_coarse_test * ref_control_points;
 

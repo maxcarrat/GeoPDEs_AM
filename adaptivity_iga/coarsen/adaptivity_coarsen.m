@@ -35,7 +35,7 @@
 %    You should have received a copy of the GNU General Public License
 %    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-function [hmsh, hspace, C_coarse] = adaptivity_coarsen (hmsh, hspace, marked, adaptivity_data)
+function [hmsh, hspace, u_coarse] = adaptivity_coarsen (hmsh, hspace, marked, adaptivity_data)
 
 
 switch (adaptivity_data.flag)
@@ -54,9 +54,9 @@ reactivated_fun = functions_to_reactivate_from_cells (hmsh, hspace, reactivated_
 [hmsh, removed_cells] = hmsh_coarsen (hmsh, reactivated_elements);
 
 if (nargout == 3)
-    [hspace, C_coarse] = hspace_coarsen (hspace, hmsh, reactivated_fun, removed_cells);
+    [hspace, u_coarse] = hspace_coarsen (hspace, hmsh, reactivated_fun, removed_cells, reactivated_elements);
 else
-    hspace = hspace_coarsen (hspace, hmsh, reactivated_fun, removed_cells);
+    hspace = hspace_coarsen (hspace, hmsh, reactivated_fun, removed_cells, reactivated_elements);
 end
 
 hmsh = hmsh_remove_empty_levels (hmsh);

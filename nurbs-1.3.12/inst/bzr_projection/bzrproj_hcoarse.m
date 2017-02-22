@@ -1,4 +1,4 @@
-function B = bzrproj_hcoarse( p, C_source, C_target, taget_el_bound_vec )
+function B = bzrproj_hcoarse( p, C_source, C_target, n_sub )
 %BZRPROJ_HCOARSE: global Bézier projection operator (h-coarsening)
 % This projection operator projects the control values of the source (fine) 
 % mesh onto the ones of the target (coarse) mesh.
@@ -11,7 +11,7 @@ function B = bzrproj_hcoarse( p, C_source, C_target, taget_el_bound_vec )
 %      p                        - polynomial degree
 %      C_source                 - Bézier extraction operator of the source mesh
 %      C_target                 - Bézier extraction operator of the source mesh
-%      taget_el_bound           - target elements boundaries [nsub x 2] 
+%      n_sub                    - number of children per element
 %
 %    OUTPUT:
 %
@@ -46,29 +46,30 @@ function B = bzrproj_hcoarse( p, C_source, C_target, taget_el_bound_vec )
 ndofs_source = size(C_source, 3)+(p-1);         % number of functions of the source mesh
 ndofs_target = size(C_target, 3)+(p-1);         % number of functions of the target mesh
 nel_source = ndofs_source - p;                  % number of elements of the source mesh
-nel_target = 1; % ndofs_target - p;                  % number of elements of the target mesh
+nel_target = ndofs_target - p;                  % number of elements of the target mesh
 h_source = 1/nel_source;                        % element size of the source mesh
-h_target = 1/2;  %1/nel_target;                        % element size of the target mesh
-n_sub = 2; % nel_source/nel_target;                  % number of source elements per target element
+h_target = 1/nel_target;                        % element size of the target mesh
+
 
 % initialize global Bézier projection operator
 B = sparse(ndofs_target, ndofs_source);  
 
 % index source elements vector
-index_source_element_vec = linspace(1,ndofs_source,ndofs_source);
+source_dofs_to_coarse = (ndofs_source - ndofs_target) * n_sub + p;
+index_source_element_vec = linspace(1,source_dofs_to_coarse,source_dofs_to_coarse);
 
 % build up matrix to convert Bézier coefficients of the source Bernstein
 % basis into coefficients of the target Bernstein basis
 
 % loop over target elements and assembly the corresponding Bézier
 % projection operator
-for i=1:nel_target
+for i=1:(nel_source-nel_target)
     % index source elements
     start_index = i + (i-1) * (n_sub-1) ;
     end_index = start_index + n_sub - 1;
     % projection operator of the ith target element
     B_target = bzrproj_el_hcoarse( p, C_source, inv(C_target(:,:,i)), h_source, h_target,...
-        taget_el_bound_vec(:,:), index_source_element_vec(start_index:end_index));
+        index_source_element_vec(start_index:end_index));
     % assembly the operators of each sub-element 
     B_target_el = zeros(p+1, n_sub + p);
     for j=1:n_sub
@@ -82,7 +83,7 @@ end
 %% Smoothing ==============================================================
 %
 %     Weights for the Smoothing are tooken from "Convergence of an
-%     efficient local least-squares fitting metho for bases with compact
+%     efficient local least-squares fitting method for bases with compact
 %     support"; Govindjee, S., Strain, J., Mitchell T. J. and Taylor R. L.;
 %     Comput. Methods. Appl. Mech. Engrg. 213-216 (2012) 84-92.
 %
@@ -92,11 +93,11 @@ end
 weights = zeros(ndofs_target, 1);
 for i=1:ndofs_target
     if (i < p + 1)
-        weights(i) = 1; %1/i;
+        weights(i) = 1/i;
     elseif (i > ndofs_target - p)
-        weights(i) = 1; %1/(ndofs_target-i+1);
+        weights(i) = 1/(ndofs_target-i+1);
     else
-        weights(i) = 1; %1/(p+1);
+        weights(i) = 1/(p+1);
     end
     B(i,:) = weights(i)*B(i,:);
 end
