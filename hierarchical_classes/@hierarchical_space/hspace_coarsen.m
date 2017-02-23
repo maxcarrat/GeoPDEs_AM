@@ -231,7 +231,12 @@ if (nargout == 2)
                     else
                         B_el_proj = bzrproj_el_hcoarse( hspace.space_of_level(lev).degree,...
                             Bzr_ext_container{lev+1}, inv(Bzr_ext_container{lev}(:,:,cells_activated_in_proj(el))), hsource_el, htarget_el, children_cells);
-                        C = B_el_proj(:,:,child);
+                        % assembly the operators of each sub-element
+                        B_target_el = zeros(hspace.space_of_level(lev).degree+1, 2 + hspace.space_of_level(lev).degree);
+                        for j=1:2
+                            B_target_el(:,j:j+hspace.space_of_level(lev).degree) = B_target_el(:,j:j+hspace.space_of_level(lev).degree) + B_el_proj(:,:,j);
+                        end
+                        C = B_target_el;
                     end
                 end
                 % end loop over children
