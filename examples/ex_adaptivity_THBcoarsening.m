@@ -172,7 +172,7 @@ hmsh_plot_cells (hmsh, 20, (figure(3)));
 % plot coarse state
 npts = [plot_data.npoints_x plot_data.npoints_y];
 [eu, F] = sp_eval (u, hspace, geometry, npts);
-figure(6); plot (squeeze(F(1,:,:)), squeeze(F(2,:,:)), eu)
+figure(6); surf (squeeze(F(1,:,:)), squeeze(F(2,:,:)), eu)
 
 
 %% Check
