@@ -265,39 +265,18 @@ for itime = 1:number_ts-1
             % Project the previous solution mesh onto the next refined mesh
             if (plot_data.print_info); fprintf('\n Project old solution onto coarsed mesh \n'); end
             % project dofs onto new mesh
-            
-            npts = [plot_data.npoints_x plot_data.npoints_y];
-            [eu, F] = sp_eval (hspace.dofs, hspace, geometry, npts);
-            figure(13 + itime); surf (squeeze(F(1,:,:)), squeeze(F(2,:,:)), eu)
-            
             hspace.dofs = u;
             [hmsh_coarse, hspace_coarse, u] = adaptivity_coarsen (hmsh, hspace, marked_coarse, adaptivity_data);
-            
-            [eu, F] = sp_eval (u, hspace_coarse, geometry, npts);
-            figure(14 + itime); surf (squeeze(F(1,:,:)), squeeze(F(2,:,:)), eu)
-            
+
             if (plot_data.print_info); fprintf('\n Project last convergent time step \n'); end
             % project last time step solution onto new mesh
-            
-            [eu, F] = sp_eval (u_last, hspace, geometry, npts);
-            figure(15 + itime); surf (squeeze(F(1,:,:)), squeeze(F(2,:,:)), eu)
-            
             hspace.dofs = u_last;
             [~, ~, u_last] = adaptivity_coarsen (hmsh, hspace, marked_coarse, adaptivity_data);
-            
-            [eu, F] = sp_eval (u_last, hspace_coarse, geometry, npts);
-            figure(16 + itime); surf (squeeze(F(1,:,:)), squeeze(F(2,:,:)), eu)
-            
+
             hmsh = hmsh_coarse;
             hspace = hspace_coarse;
             hspace.dofs = u;
-            
-
-            
-%             hspace.dofs = Ccoarse * u;
-%             u = hspace.dofs;
-%             u_last = Ccoarse * u_last;
-% 
+ 
 %             % project error estimation onto new mesh
 %             if strcmp(adaptivity_data.flag, 'functions')
 %                 est = Ccoarse * est;

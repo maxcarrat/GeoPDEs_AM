@@ -126,7 +126,7 @@ active = hspace.active;
 deactivated = hspace.deactivated;
 active_funs_supported = cell(1, hspace.nlevels);         % cell array with the active functions of level l supported by the reactivated_cell
 Bzr_ext_container = cell(hmsh.ndim, hspace.nlevels);     % n-dimensional cell array to cache Bézier extraction matrices of each level
-removed_funs = cell(1, hspace.nlevels);                  % cell array eith functions to remove at each level
+% removed_funs = cell(1, hspace.nlevels);                  % cell array eith functions to remove at each level
 
 % initialize the cell array to store the coarsened dofs u_coarse
 u_coarse = cell(1, hspace.nlevels);
@@ -145,10 +145,6 @@ for lev = hspace.nlevels-1:-1:1
         active{lev} = union (active{lev}, funs_to_reactivate{lev});
         deactivated{lev} = setdiff (deactivated{lev}, funs_to_reactivate{lev});
         active_funs_supported{lev} = intersect(funs_on_reactivated_cells, active{lev});
-        
-        removed_funs{lev+1} = intersect(sp_get_basis_functions(hspace.space_of_level(lev+1), hmsh.mesh_of_level(lev+1), removed_cells{lev+1}), hspace.active{lev+1});
-        active{lev+1} = setdiff (active{lev+1}, removed_funs{lev+1});
-        deactivated{lev+1} = union (deactivated{lev+1}, removed_funs{lev+1});
         
     end
 end
