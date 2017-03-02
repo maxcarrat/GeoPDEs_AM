@@ -7,7 +7,6 @@
 %
 %   hmsh:   object representing the fine hierarchical mesh (see hierarchical_mesh)
 %   hspace: object representing the fine space of hierarchical splines (see hierarchical_space)
-%   u: degrees of freedom to project onto the coarser mesh
 %   marked: cell array with the indices, in the tensor product space, of the marked elements/functions
 %            to reactivate for each level
 %   adaptivity_data: a structure with the data for the adaptivity method.
@@ -21,6 +20,8 @@
 %   u:      projected degrees of freedom
 %
 % Copyright (C) 2016 Eduardo M. Garau, Rafael Vazquez
+%
+% Copyright (C) 2017 Massimo Carraturo
 %
 %    This program is free software: you can redistribute it and/or modify
 %    it under the terms of the GNU General Public License as published by
@@ -40,16 +41,12 @@ function [hmsh, hspace, u_coarse] = adaptivity_coarsen (hmsh, hspace, marked, ad
 
 switch (adaptivity_data.flag)
     case 'functions'
-%         [reactivated_fun, ~] = active2deactivated_marking(marked, hmsh, hspace, adaptivity_data);
-        marked_elements = compute_cells_to_reactivate (hspace, hmsh, marked);
+        [reactivated_fun, ~] = active2deactivated_marking(marked, hmsh, hspace, adaptivity_data);
+        reactivated_elements = compute_cells_to_reactivate (hspace, hmsh, reactivated_fun);
     case 'elements'
-        marked_elements = marked;
+        [reactivated_elements, ~] = active2deactivated_marking(marked, hmsh, hspace, adaptivity_data);
+        reactivated_fun = functions_to_reactivate_from_cells (hmsh, hspace, reactivated_elements);
 end
-
-% [marked_elements, ~] = compute_cells_to_reactivate (hspace, hmsh, reactivated_fun);
-
-[reactivated_elements, ~] = active2deactivated_marking(marked_elements, hmsh, hspace, adaptivity_data);
-reactivated_fun = functions_to_reactivate_from_cells (hmsh, hspace, reactivated_elements);
 
 [hmsh, removed_cells] = hmsh_coarsen (hmsh, reactivated_elements);
 

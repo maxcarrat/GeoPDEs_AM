@@ -26,7 +26,7 @@ deact_marked = cell (hmsh.nlevels, 1);
 for lev = 1:hmsh.nlevels-1
     if ~isempty(marked{lev+1})
         switch (lower (adaptivity_data.flag))
-            case 'elements',
+            case 'elements'
                 [parents, flag] = hmsh_get_parent (hmsh, lev+1, marked{lev+1});
                 if flag ~= 1
                     disp('Some nonactive elements were marked.')
@@ -38,7 +38,7 @@ for lev = 1:hmsh.nlevels-1
                         deact_marked{lev} = union(deact_marked{lev}, parents(i));
                     end
                 end
-            case 'functions',
+            case 'functions'
                 [parents, flag] = hspace_get_parents (hspace, lev+1, marked{lev+1});
                 if flag ~= 1
                     disp('Some nonactive functions were marked.')

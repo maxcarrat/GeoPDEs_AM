@@ -148,4 +148,8 @@ figure(6); plot (squeeze(F(1,:,:)), eu)
 
 %% Check
 
-
+if ~isequal(u, initial_values)
+    disp('is not a projector !');
+else
+    disp('is a projector !!!');
+end

@@ -64,16 +64,10 @@ if (strcmpi (option, 'reduced'))
   end
   
 elseif (strcmpi (option, 'full'))
-  for lev = 2:hspace.nlevels
-    I = speye (hspace.space_of_level(lev).ndof);
-    aux = matrix_basis_change__ (hspace, lev);
-    % if refined
-    if(size(aux,2)==size(Csub{lev-1},1))
-        Csub{lev} = [aux*Csub{lev-1}, I(:,hspace.active{lev})];
-    else % coarsed
+    for lev = 2:hspace.nlevels
+        I = speye (hspace.space_of_level(lev).ndof);
         aux = matrix_basis_change__ (hspace, lev);
-        Csub{lev} = [aux'*hspace.Csub{lev-1}, I(:,hspace.active{lev})];
+        Csub{lev} = [aux*Csub{lev-1}, I(:,hspace.active{lev})];
+        clear aux I
     end
-    clear aux I
-  end
 end

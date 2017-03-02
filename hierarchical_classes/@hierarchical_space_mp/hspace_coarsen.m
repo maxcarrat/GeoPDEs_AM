@@ -4,10 +4,10 @@
 %
 % INPUT:
 %
-%   hspace:         object representing the fine hierarchical space (see hierarchical_space_mp)
-%   hmsh:           object representing the hierarchical mesh, already coarsened (see hierarchical_mesh_mp)
+%   hspace:             object representing the fine hierarchical space (see hierarchical_space_mp)
+%   hmsh:               object representing the hierarchical mesh, already coarsened (see hierarchical_mesh_mp)
 %   funs_to_reactivate: cell array with the indices of the functions to reactivate for each level
-%   removed_cells:  cell array with the elements removed during coarsening, for each level
+%   removed_cells:      cell array with the elements removed during coarsening, for each level
 %
 % OUTPUT:
 %

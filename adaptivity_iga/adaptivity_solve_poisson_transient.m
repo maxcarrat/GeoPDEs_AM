@@ -30,7 +30,7 @@
 %
 %   u: computed degrees of freedom
 %
-% Copyright (C) 2015 Eduardo M. Garau, Rafael Vazquez
+% Copyright (C) 2017 Massimo Carraturo
 %
 %    This program is free software: you can redistribute it and/or modify
 %    it under the terms of the GNU General Public License as published by

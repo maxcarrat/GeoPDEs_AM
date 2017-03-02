@@ -72,7 +72,7 @@ delta_t = problem_data.time_discretization(time_step+1)-problem_data.time_discre
 
 x = cell (hmsh.rdim, 1);
 path = cell (hmsh.rdim, 1);
-for idim = 1:hmsh.rdim;
+for idim = 1:hmsh.rdim
     x{idim} = reshape (F(idim,:), [], hmsh.nel);
     path{idim} = ones(size(x{idim})).*problem_data.path(time_step, idim);
 end
@@ -87,9 +87,9 @@ if (isfield (problem_data, 'grad_c_diff'))
     aux = reshape (sum (val_grad_c_diff .* dernum, 1), size(valf));
 end
 aux = (valf - val_c_cap .* diff_time + val_c_diff.*der2num + aux).^2; % size(aux) = [hmsh.nqn, hmsh.nel], interior residual at quadrature nodes
-normalized_aux = aux / max(max(aux));%.^2;
+normalized_aux = aux / max(max(aux));
 switch adaptivity_data.flag
-    case 'elements',
+    case 'elements'
         w = [];
         h = [];
         for ilev = 1:hmsh.nlevels
@@ -101,9 +101,9 @@ switch adaptivity_data.flag
         h = h * sqrt (hmsh.ndim);
         
         est = sqrt (sum (normalized_aux.*w));
-        est = C0_est*h.*est(:);
+        est = C0_est*(h.^2).*est(:);
         
-    case 'functions',
+    case 'functions'
         ms = zeros (hmsh.nlevels, 1);
         for ilev = 1:hmsh.nlevels
             if (hmsh.msh_lev{ilev}.nel ~= 0)
