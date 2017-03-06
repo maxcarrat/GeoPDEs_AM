@@ -131,50 +131,50 @@ npts = [plot_data.npoints_x];
 [eu_ref, F] = sp_eval (u_ref, hspace, geometry, npts);
 figure(7); plot (squeeze(F(1,:,:)), eu_ref)
 
-% marked_ref{1} = [];
-% marked_ref{2} = [];
-% marked_ref{3} = [5 6 7 8 9 10 11 12 13 14 15 16];
-% marked_ref{4} = [];
-% [hmsh, hspace, Cref] = adaptivity_refine (hmsh, hspace, marked_ref, adaptivity_data);
-% hmsh_plot_cells (hmsh, 20, (figure(3)));
-% u_ref_2 = Cref*u_ref;
-% hspace.dofs = u_ref_2;
-% 
-% % plot refined state
-% npts = [plot_data.npoints_x];
-% [eu_ref, F] = sp_eval (hspace.dofs, hspace, geometry, npts);
-% figure(8); plot (squeeze(F(1,:,:)), eu_ref)
+marked_ref{1} = [];
+marked_ref{2} = [];
+marked_ref{3} = [5 6 7 8 9 10 11 12];
+marked_ref{4} = [];
+[hmsh, hspace, Cref] = adaptivity_refine (hmsh, hspace, marked_ref, adaptivity_data);
+hmsh_plot_cells (hmsh, 20, (figure(3)));
+u_ref_2 = Cref*u_ref;
+hspace.dofs = u_ref_2;
+
+% plot refined state
+npts = [plot_data.npoints_x];
+[eu_ref, F] = sp_eval (hspace.dofs, hspace, geometry, npts);
+figure(8); plot (squeeze(F(1,:,:)), eu_ref)
 
 
 %% Coarsening back to the initial state
-% marked_coarse{1} = [];
-% marked_coarse{2} = [];
-% marked_coarse{3} = [];
-% marked_coarse{4} = [ 15 16 17 18 19 20 21 22 23 24];
-% [hmsh, hspace, u] = adaptivity_coarsen(hmsh, hspace, marked_coarse, adaptivity_data);
-% hspace.dofs = u;
-% hmsh_plot_cells (hmsh, 20, (figure(4)));
-% 
-% 
-% % plot coarse state
-% npts = [plot_data.npoints_x];
-% [eu, F] = sp_eval (u, hspace, geometry, npts);
-% figure(9); plot (squeeze(F(1,:,:)), eu)
-
 marked_coarse{1} = [];
 marked_coarse{2} = [];
-marked_coarse{3} = [ 5 6 7 8 9 10 11 12];
-%%%%%%%%
-hspace.dofs = u_ref;
-%%%%%%%%
+marked_coarse{3} = [];
+marked_coarse{4} = [ 9 10 11 12];
 [hmsh, hspace, u] = adaptivity_coarsen(hmsh, hspace, marked_coarse, adaptivity_data);
-hmsh_plot_cells (hmsh, 20, (figure(5)));
+hspace.dofs = u;
+hmsh_plot_cells (hmsh, 20, (figure(4)));
 
 
 % plot coarse state
 npts = [plot_data.npoints_x];
 [eu, F] = sp_eval (u, hspace, geometry, npts);
-figure(10); plot (squeeze(F(1,:,:)), eu)
+figure(9); plot (squeeze(F(1,:,:)), eu)
+
+% marked_coarse{1} = [];
+% marked_coarse{2} = [];
+% marked_coarse{3} = [ 5 6 7 8 9 10 11 12];
+% %%%%%%%%
+% hspace.dofs = u_ref;
+% %%%%%%%%
+% [hmsh, hspace, u] = adaptivity_coarsen(hmsh, hspace, marked_coarse, adaptivity_data);
+% hmsh_plot_cells (hmsh, 20, (figure(5)));
+% 
+% 
+% % plot coarse state
+% npts = [plot_data.npoints_x];
+% [eu, F] = sp_eval (u, hspace, geometry, npts);
+% figure(10); plot (squeeze(F(1,:,:)), eu)
 
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % marked_coarse{1} = [];

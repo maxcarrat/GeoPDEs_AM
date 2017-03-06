@@ -45,14 +45,15 @@ end
 hspace.Csub = hspace_subdivision_matrix (hspace, hmsh);
 
 if(nargout >= 2)
+    ndof_per_level = cellfun (@numel, hspace.active);
+    ndof_lev = cumsum (ndof_per_level(1:hspace.nlevels));
     u = zeros(hspace.ndof, 1);
-    for lev = hspace.nlevels:-1:1
-        if (size(u_coarse{lev},1)>1)
-            u(1:size(hspace.Csub{lev},2)) = u(1:size(hspace.Csub{lev},2)) + hspace.Csub{lev}'*u_coarse{lev};
-        else
-            u(1:numel(u_coarse{lev})) = u_coarse{lev};
+    for lev = hspace.nlevels:-1:2
+        if ndof_lev(lev-1) < ndof_lev(lev)
+            u(ndof_lev(lev-1)+1:ndof_lev(lev)) =  hspace.Csub{lev}(:,ndof_lev(lev-1)+1:ndof_lev(lev))'*u_coarse{lev};
         end
     end
+    u(1:ndof_lev(1)) = hspace.Csub{1}(:,1:ndof_lev(1))'*u_coarse{1};
 end
 
 % Fill the information for the boundaries
@@ -90,7 +91,7 @@ end
 end
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-% function [hspace, u_coarse] = update_active_functions (hspace, hmsh, funs_to_reactivate, reactivated_cell)
+% function [hspace, u_coarse] = update_active_functions (hspace, hmsh, funs_to_reactivate, reactivated_cell, removed_cells)
 %
 % This function updates the active (hspace.active) and deactivated (hspace.deactivated) degrees of freedom,
 % reactivating the functions in marked_funs.
@@ -100,6 +101,7 @@ end
 %           hmsh:                       an object of the class hierarchical_mesh, already coarsened
 %           funs_to_reactivate:         indices of active functions of level lev to be reactivated
 %           reactivated_cell:           indices of cells of level lev to be reactivated
+%           removed_cells:              cell array with the elements removed during coarsening, for each level
 %
 % Output:   hspace:    the coarsened space, an object of the class hierarchical_space
 %           u_coarse:  coarsened_dofs
@@ -120,13 +122,13 @@ end
 %    You should have received a copy of the GNU General Public License
 %    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-function [hspace, u_coarse] = update_active_functions (hspace, hmsh, funs_to_reactivate, reactivated_cell, removed_cells)
+function [hspace, u_coarse] = update_active_functions (hspace, hmsh, funs_to_reactivate, reactivated_cell,removed_cells)
 
 active = hspace.active;
+active_aux = active;
 deactivated = hspace.deactivated;
 active_funs_supported = cell(1, hspace.nlevels);         % cell array with the active functions of level l supported by the reactivated_cell
 Bzr_ext_container = cell(hmsh.ndim, hspace.nlevels);     % n-dimensional cell array to cache Bézier extraction matrices of each level
-% removed_funs = cell(1, hspace.nlevels);                  % cell array eith functions to remove at each level
 
 % initialize the cell array to store the coarsened dofs u_coarse
 u_coarse = cell(1, hspace.nlevels);
@@ -135,17 +137,24 @@ ndof_until_lev = sum (ndof_per_level_prev(1:hspace.nlevels-1));
 ndof_above_lev = sum (ndof_per_level_prev(1:hspace.nlevels));
 u_coarse{hspace.nlevels} = hspace.Csub{hspace.nlevels}(:,ndof_until_lev+1:ndof_above_lev)*hspace.dofs(ndof_until_lev+1:ndof_above_lev);
 
-for lev = hspace.nlevels-1:-1:1
-    if  ~isempty (reactivated_cell{lev})
-        ndof_until_lev = sum (ndof_per_level_prev(1:lev-1));
-        ndof_above_lev = sum (ndof_per_level_prev(1:lev));
+funs2remove = sp_get_basis_functions (hspace.space_of_level(hspace.nlevels), hmsh.mesh_of_level(hspace.nlevels), removed_cells{hspace.nlevels});
+active{hspace.nlevels} = setdiff(active{hspace.nlevels}, funs2remove);
         
-        u_coarse{lev} = hspace.Csub{lev}(:,ndof_until_lev+1:ndof_above_lev)*hspace.dofs(ndof_until_lev+1:ndof_above_lev);
+for lev = hspace.nlevels-1:-1:1
+    ndof_until_lev = sum (ndof_per_level_prev(1:lev-1));
+    ndof_above_lev = sum (ndof_per_level_prev(1:lev));
+    
+    u_coarse{lev} = hspace.Csub{lev}(:,ndof_until_lev+1:ndof_above_lev)*hspace.dofs(ndof_until_lev+1:ndof_above_lev);
+    
+    if  ~isempty (reactivated_cell{lev})
         funs_on_reactivated_cells = sp_get_basis_functions (hspace.space_of_level(lev), hmsh.mesh_of_level(lev), reactivated_cell{lev});
+        funs2remove = sp_get_basis_functions (hspace.space_of_level(lev), hmsh.mesh_of_level(lev), removed_cells{lev});
+
+        active{lev} = setdiff(active{lev}, funs2remove);
         active{lev} = union (active{lev}, funs_to_reactivate{lev});
+        
         deactivated{lev} = setdiff (deactivated{lev}, funs_to_reactivate{lev});
         active_funs_supported{lev} = intersect(funs_on_reactivated_cells, active{lev});
-        
     end
 end
 
@@ -160,12 +169,13 @@ if (nargout == 2)
     degree = hspace.space_of_level(hspace.nlevels).degree;
     nel_dir = cell(1, hspace.nlevels);
     nel_dir{hspace.nlevels} = zeros(1, hmsh.ndim);
+    % loop over dimensions
     for idim=1:hmsh.ndim
         Bzr_ext_container{idim, hspace.nlevels} = bzrextr(knots{idim}, degree(idim));
         nel_dir{hspace.nlevels}(idim) = numel(knots{idim})-2*degree(idim)-1;
     end
     
-% loop over levels from n-1 to 1
+    % loop over levels from n-1 to 1
     for lev = hspace.nlevels-1:-1:1
         % Bèzier extraction of level lev
         knots = hspace.space_of_level(lev).knots;
@@ -174,11 +184,11 @@ if (nargout == 2)
             Bzr_ext_container{idim, lev} = bzrextr(knots{idim}, degree(idim));
             nel_dir{lev}(idim) = numel(knots{idim})-2*degree(idim)-1;
         end
-        % express active_funs_supported as linear combination of funs of
-        % level lev+1
-        ndof_above_lev = sum (ndof_per_level_prev(1:lev+1));
-        
+        % if level contains elements to be coarsened...
         if  ~isempty (reactivated_cell{lev})
+            % express active_funs_supported as linear combination of funs of
+            % level lev+1
+            ndof_above_lev = sum (ndof_per_level_prev(1:lev+1));
             % express lower levels funs as linear combination of funs of
             % level lev
             active_dofs_lc = hspace.Csub{lev+1}(:,1:ndof_above_lev)*hspace.dofs(1:ndof_above_lev);
@@ -187,9 +197,8 @@ if (nargout == 2)
             % initialize temporary coarse dofs vector
             u_coarse_temp = cell(1, max(cells_activated_in_proj));
             % element dimensional scaling parameter
-            hsource_el = (1/hmsh.mesh_of_level(lev+1).nel)^(1/hmsh.ndim);
-            htarget_el = (1/hmsh.mesh_of_level(lev).nel)^(1/hmsh.ndim);
-
+            htarget_el = hmsh.msh_lev{lev}.element_size(:);
+            
             % loop over elements to be reactivated
             for el = 1:numel(cells_activated_in_proj)
                 % get indeces of functions to be activated in projection
@@ -203,18 +212,20 @@ if (nargout == 2)
                 funs_supported = sp_get_basis_functions (hspace.space_of_level(lev+1), hmsh.mesh_of_level(lev+1), children_cells);
                 % initialize projection tensor
                 C = 1;
-                % get unidimensional indeces for projection
+                % get indeces for projection
                 [I,J,K] = ind2sub(nel_dir{lev+1}, children_cells);
                 children_cells_unidim_indeces = [I, J, K];
                 [I,J,K] = ind2sub(nel_dir{lev}, cells_activated_in_proj');
                 cells_activated_in_proj_dir = [I; J; K];
+                parent_index = hmsh_get_parent(hmsh, lev, el);
                 
                 % loop over dimensions
                 for idim = 1:hmsh.ndim
+                    hsource_el = htarget_el(parent_index)/hmsh.nsub(idim);
                     % get local Bézier projector
                     B_el_proj = bzrproj_el_hcoarse( hspace.space_of_level(lev).degree(idim),...
                         Bzr_ext_container{idim, lev+1}, inv(Bzr_ext_container{idim, lev}(:,:,cells_activated_in_proj_dir(idim,el))),...
-                        hsource_el, htarget_el, unique(children_cells_unidim_indeces(:,idim)));
+                        hsource_el, htarget_el(parent_index), unique(children_cells_unidim_indeces(:,idim)));
                     % assembly the operators of each sub-element
                     B_target_el = zeros(hspace.space_of_level(lev).degree(idim)+1, 2 + hspace.space_of_level(lev).degree(idim));
                     for j=1:2
@@ -250,37 +261,15 @@ if (nargout == 2)
             % insert the new dofs into the hierarchical structure
             u_coarse{lev}(funs_to_smooth) = smooth_dofs(funs_to_smooth);
             
+            % ... else copy the level dof of the previous state
         else
-            ndof_per_level_updated = cellfun (@numel, active);
-            if lev > 1
-                if (~isempty(active{lev}) && ~isempty(active{lev-1}))
-                    ndof_beneath_lev = sum (ndof_per_level_updated(1:lev-1));
-                    ndof_until_lev = sum (ndof_per_level_updated(1:lev));
-                    u_coarse{lev} = [zeros(ndof_beneath_lev,1)' hspace.dofs(ndof_beneath_lev+1:ndof_until_lev)'];
-                elseif (~isempty(active{lev}) && isempty(active{lev-1}))
-                    if lev > 2
-                        ndof_beneath_lev = sum (ndof_per_level_updated(1:lev-2));
-                        ndof_until_lev = sum (ndof_per_level_updated(1:lev));
-                        u_coarse{lev} = [zeros(ndof_beneath_lev,1)' hspace.dofs(ndof_beneath_lev+1:ndof_until_lev)'];
-                    else
-                        ndof_beneath_lev = 1;
-                        ndof_until_lev = sum (ndof_per_level_updated(1:lev));
-                        u_coarse{lev} = hspace.dofs(ndof_beneath_lev+1:ndof_until_lev)';
-                    end
-                else
-                    u_coarse{lev} = [];
-                end
-            else
-                if ~isempty(active{1})
-                    ndof_until_lev = numel(active{1});
-                    u_coarse{1} = hspace.dofs(1:ndof_until_lev)';
-                else
-                    u_coarse{1} = [];
-                end
-            end
+            ndof_per_level_updated = cellfun (@numel, hspace.active);
+            ndof_until_lev = sum (ndof_per_level_updated(1:lev));
+            u_coarse{lev} = hspace.Csub{lev}*hspace.dofs(1:ndof_until_lev);
         end
-        
+        % end if
     end
+    % end loop over elements
 end
 
 hspace.active = active(1:hspace.nlevels);

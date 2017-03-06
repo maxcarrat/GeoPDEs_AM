@@ -137,18 +137,22 @@ sp_to_vtk (hspace.dofs, hspace, geometry, npts(1:hmsh.rdim), output_file, {'solu
 % Plot in Octave/Matlab
 if (plot_data.plot_matlab)
     if (plot_data.print_info); fprintf('\n Octave Post-Process'); end
-    [eu, F] = sp_eval (hspace.dofs, hspace, geometry, npts);
-    if numel(npts) == 1
+    if hmsh.ndim == 1
+        npts = [plot_data.npoints_x];
+        [eu, F] = sp_eval (hspace.dofs, hspace, geometry, npts);
         figure(1000 + 0); plot (squeeze(F(1,:,:)), eu)
-    elseif numel(npts) == 2
+    elseif hmsh.ndim == 2
+        npts = [plot_data.npoints_x plot_data.npoints_y];
+        [eu, F] = sp_eval (hspace.dofs, hspace, geometry, npts);
         figure(1000 + 0); surf (squeeze(F(1,:,:)), squeeze(F(2,:,:)), eu)
     else
+        [eu, F] = sp_eval (hspace.dofs, hspace, geometry, npts);
         figure(1000 + 0); surf (squeeze(F(1,:,:)), squeeze(F(2,:,:)), squeeze(F(3,:,:)), eu)
     end
 end
 
 
-% BACKWARD EULER LOOP
+%% BACKWARD EULER =========================================================
 for itime = 1:number_ts-1
     
     % Initialization of some auxiliary variables
@@ -172,12 +176,12 @@ for itime = 1:number_ts-1
             fprintf('\n%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% Adaptivity iteration %d %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%\n',iter);
         end
         
-%         if (~hspace_check_partition_of_unity (hspace, hmsh))
-%             disp('ERROR: The partition-of-the-unity property does not hold.')
-%             solution_data.flag = -1; break
-%         end
+        if (~hspace_check_partition_of_unity (hspace, hmsh))
+            disp('ERROR: The partition-of-the-unity property does not hold.')
+            solution_data.flag = -1; break
+        end
         
-        % SOLVE AND PLOT
+%% SOLVE ==================================================================
         if (plot_data.print_info)
             disp('SOLVE:')
             fprintf('Number of elements: %d. Total DOFs: %d \n', hmsh.nel, hspace.ndof);
@@ -197,7 +201,7 @@ for itime = 1:number_ts-1
             end
         end
         
-        % ESTIMATE
+%% ESTIMATE ===============================================================
         if (plot_data.print_info); fprintf('\n ESTIMATE: \n'); end
         est = adaptivity_estimate_poisson_nl(u, u_last, itime, hmsh, hspace, problem_data, adaptivity_data);
 %         est = adaptivity_estimate_gradient(u, itime, hmsh, hspace, problem_data, adaptivity_data);
@@ -208,7 +212,7 @@ for itime = 1:number_ts-1
             if (plot_data.print_info); fprintf('Error in H1 seminorm = %g\n', err_h1s(iter)); end
         end
         
-        % STOPPING CRITERIA
+% STOPPING CRITERIA -------------------------------------------------------
         if (gest(iter) < adaptivity_data.tol)
             if (plot_data.print_info); disp('Success: The solution converge!!!'); end;
             hspace.dofs = u;
@@ -226,8 +230,8 @@ for itime = 1:number_ts-1
             hspace.dofs = u; 
             break;
         end
-        
-        % MARK REFINEMENT
+%% REFINEMENT =============================================================
+% MARK REFINEMENT
         if (plot_data.print_info); disp('MARK REFINEMENT:'); end
         [marked_ref, num_marked_ref] = adaptivity_mark (est, hmsh, hspace, adaptivity_data);
         
@@ -250,42 +254,45 @@ for itime = 1:number_ts-1
         if strcmp(adaptivity_data.flag, 'functions')
             est = Cref * est;
         end;
-
+        
+%% COARSENING =============================================================
         % MARK COARSENING
         if (plot_data.print_info); disp('MARK COARSENING:'); end
-        [marked_coarse, num_marked_coarse] = marking_for_coarsening (est, hmsh, hspace, adaptivity_data); 
-      
-        % COARSE
-        if (plot_data.print_info)
-            fprintf('%d %s marked for coarsening \n', num_marked_coarse, adaptivity_data.flag);
-            disp('COARSE')
-        end
+        [marked_coarse, num_marked_coarse] = marking_for_coarsening (est, hmsh, hspace, adaptivity_data);
+        
         if (itime > 1 && ~isempty(marked_coarse))
-            
+            % COARSE
+            if (plot_data.print_info)
+                fprintf('%d %s marked for coarsening \n', num_marked_coarse, adaptivity_data.flag);
+                disp('COARSE')
+            end
             % Project the previous solution mesh onto the next refined mesh
             if (plot_data.print_info); fprintf('\n Project old solution onto coarsed mesh \n'); end
             % project dofs onto new mesh
             hspace.dofs = u;
             [hmsh_coarse, hspace_coarse, u] = adaptivity_coarsen (hmsh, hspace, marked_coarse, adaptivity_data);
-
+            
             if (plot_data.print_info); fprintf('\n Project last convergent time step \n'); end
             % project last time step solution onto new mesh
             hspace.dofs = u_last;
             [~, ~, u_last] = adaptivity_coarsen (hmsh, hspace, marked_coarse, adaptivity_data);
-
+            
+%             if (plot_data.print_info); fprintf('\n Project estimated error \n'); end
+%             % project error onto new mesh
+%             hspace.dofs = est;
+%             [~, ~, est] = adaptivity_coarsen (hmsh, hspace, marked_coarse, adaptivity_data);
+            
             hmsh = hmsh_coarse;
             hspace = hspace_coarse;
             hspace.dofs = u;
- 
-%             % project error estimation onto new mesh
-%             if strcmp(adaptivity_data.flag, 'functions')
-%                 est = Ccoarse * est;
-%             end;
+            
+            %             % project error estimation onto new mesh
+            %             if strcmp(adaptivity_data.flag, 'functions')
+            %                 est = Ccoarse * est;
+            %             end;
         end
         
-        
-
-        
+%% ========================================================================
         
         if (plot_data.adaptivity)
             % ==POST-PROCESSING====================================================
@@ -349,12 +356,16 @@ for itime = 1:number_ts-1
         % Plot in Octave/Matlab
         if (plot_data.plot_matlab)
             if (plot_data.print_info); fprintf('\n Octave Post-Process'); end
-            [eu, F] = sp_eval (hspace.dofs, hspace, geometry, npts);
-            if numel(hmsh.rdim) == 1
+            if hmsh.ndim == 1
+                npts = [plot_data.npoints_x];
+                [eu, F] = sp_eval (u, hspace, geometry, npts);
                 figure(1000 + itime); plot (squeeze(F(1,:,:)), eu)
-            elseif numel(hmsh.rdim) == 2
+            elseif hmsh.ndim == 2
+                npts = [plot_data.npoints_x plot_data.npoints_y];
+                [eu, F] = sp_eval (u, hspace, geometry, npts);
                 figure(1000 + itime); surf (squeeze(F(1,:,:)), squeeze(F(2,:,:)), eu)
             else
+                [eu, F] = sp_eval (u, hspace, geometry, npts);
                 figure(1000 + itime); surf (squeeze(F(1,:,:)), squeeze(F(2,:,:)), squeeze(F(3,:,:)), eu)
             end
         end

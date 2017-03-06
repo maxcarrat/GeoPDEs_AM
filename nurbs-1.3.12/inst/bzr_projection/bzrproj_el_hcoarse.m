@@ -61,7 +61,7 @@ phi = h_source/h_target;
 % loop over elements of the source mesh
 for i=1:n
     % transformation matrix from [-1, 1] to taget element boundaries
-	A = brnsttransf(xi(i), xi(i+1), p);
+    A = brnsttransf(xi(i), xi(i+1), p);
     % projection operator
     B(:,:,i) = R_target(:,:)' * phi*G_inv*A'*G * C_source(:,:,index_source_element_vec(i))';
 end

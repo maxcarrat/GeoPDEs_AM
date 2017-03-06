@@ -1,4 +1,5 @@
 % PHYSICAL DATA OF THE PROBLEM
+close all
 clear problem_data
 clc
 % Physical domain, defined as NURBS map given in a text file
@@ -63,22 +64,22 @@ clear adaptivity_data
 adaptivity_data.flag = 'elements';
 % adaptivity_data.flag = 'functions';
 adaptivity_data.C0_est = 1.0;
-adaptivity_data.mark_param = 0.7;
+adaptivity_data.mark_param = 0.75;
 adaptivity_data.mark_param_coarsening = 0.1;
 adaptivity_data.mark_strategy = 'MS';
 adaptivity_data.max_level = 5;
 adaptivity_data.max_ndof = 15000;
 adaptivity_data.num_max_iter = 20;
 adaptivity_data.max_nel = 15000;
-adaptivity_data.tol = 1.0e-06;
+adaptivity_data.tol = 50.0e-06;
 
 % GRAPHICS
 plot_data.plot_hmesh = true;
 plot_data.adaptivity = false;
-plot_data.plot_discrete_sol = true;
+plot_data.plot_discrete_sol = false;
 plot_data.print_info = true;
-plot_data.plot_matlab = false;
-plot_data.time_steps_to_post_process = linspace(1,n_time_steps,n_time_steps); %[1,5,10,15,20];
+plot_data.plot_matlab = true;
+plot_data.time_steps_to_post_process = [1,20,21];% linspace(1,n_time_steps,n_time_steps); % 
 plot_data.file_name = strcat(problem_output.folder, '/poisson_adaptivity_Fachinotti20_travelling_heat_source_lumped_2D_%d.vts');
 plot_data.file_name_err = strcat(problem_output.folder, '/poisson_adaptivity_Fachinotti20_travelling_heat_source_lumped_2D_error_%d.vts');
 plot_data.npoints_x = 100;        %number of points x-direction in post-processing
