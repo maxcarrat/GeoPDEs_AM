@@ -111,7 +111,7 @@ end
 end
 
 function [ B ] = bzrproj_el_basishcoarse( p, C_source, C_target, h_source, h_target, taget_el_bound_vec, index_source_element_vec )
-%BZRPROJ_EL_HCOARSE:  Bézier projection operator (h-coarsening)
+%BZRPROJ_EL_BASISHCOARSE:  Bézier projection operator (h-coarsening)
 % This projection operator project n elements of a source mesh onto
 % an element of a target mesh. The resulting control values have to be 
 % smoothed by means of the weights.

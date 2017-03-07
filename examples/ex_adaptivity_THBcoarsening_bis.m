@@ -231,11 +231,14 @@ hmsh_plot_cells (hmsh, 20, (figure(99)));
 npts = [plot_data.npoints_x plot_data.npoints_y];
 [eu, F] = sp_eval (u, hspace, geometry, npts);
 figure(999); surf (squeeze(F(1,:,:)), squeeze(F(2,:,:)), eu)
+
 %% Check
 
-if ~isequal(u, initial_values)
-    disp('is not a projector !');
-else
-    disp('is a projector !!!');
+for i=1:numel(u)
+    if (u(i) < initial_values(i)-1.0e-08|| u(i) > initial_values(i)+1.0e-08)
+        disp('is not a projector !');
+    else
+        disp('O.K.');
+    end
 end
 

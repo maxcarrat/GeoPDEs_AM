@@ -1,20 +1,18 @@
-function [ w ] = wgheval_LLSQ( p, ndofs, index_dof )
+function weight = wgheval_LLSQ( funs_support )
 %WGHEVAL_LLSQ: Bézier projection weights valuation
 % Evaluate the weights to smooth the projected control values.
 %
 % Calling Sequence:
 %
-%   G_inv = grmninv( p, U, n )
+%   weight = wgheval_LLSQ( p, ndofs, index_dof )
 %
 %    INPUT:
 %
-%      p                    - polynomial degree
-%      ndof                 - number of degrees of freedom
-%      index_dof            - index of actual degree of freedom
+%      funs_support        - cell array of elements supporting the function
 %
 %    OUTPUT:
 %
-%      w - weights of Bézier projection operator
+%      weight - weights of Bézier projection operator
 %
 %   Adapted from "Convergence of an
 %     efficient local least-squares fitting metho for bases with compact
@@ -36,13 +34,7 @@ function [ w ] = wgheval_LLSQ( p, ndofs, index_dof )
 %    You should have received a copy of the GNU General Public License
 %    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-if (index_dof < p)
-    w = 1/index_dof;
-elseif (index_dof > ndofs - (p+1))
-    w = 1/(ndofs-index_dof+1);
-else
-    w = 1/(p+1);
-end
+weight = 1/numel(funs_support) ;
 
 end
 

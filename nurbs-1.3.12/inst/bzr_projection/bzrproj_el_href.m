@@ -5,7 +5,7 @@ function [ B ] = bzrproj_el_href( p, C_source, C_target, index_target, n_sub )
 %
 % Calling Sequence:
 %
-%   B = bzrproj_el_href( p, C_source, R_target, index_target_elements )
+%   B = bzrproj_el_href( p, C_source, C_target, index_target_elements )
 %
 %    INPUT:
 %      p                        - polynomial degree
@@ -43,7 +43,6 @@ function [ B ] = bzrproj_el_href( p, C_source, C_target, index_target, n_sub )
 %    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 % initialize Bézier projection operator
-nel_target = size(C_target, 3) - 1;         
 xi = linspace(-1, 1, n_sub+1);
 B = zeros(p+1, p+1, n_sub);
 

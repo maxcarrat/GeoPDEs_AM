@@ -44,13 +44,13 @@ clear problem_data
 close all
 clc
 % Initial domain, defined as NURBS map given in a text file
-problem_data.geo_name = nrbline ([0 0], [1.2 0]);
+problem_data.geo_name = nrbline ([0 0], [1.0 0]);
 
 % CHOICE OF THE DISCRETIZATION PARAMETERS (Initial mesh)
 clear method_data
 method_data.degree      = 2;                % Degree of the splines
 method_data.regularity  = 1;                % Regularity of the splines
-method_data.nsub_coarse = 4;                % Number of subdivisions of the coarsest mesh, with respect to the mesh in geometry
+method_data.nsub_coarse = 3;                % Number of subdivisions of the coarsest mesh, with respect to the mesh in geometry
 method_data.nsub_refine = 2;                % Number of subdivisions for each refinement
 method_data.nquad       = 3;                % Points for the Gaussian quadrature rule
 method_data.space_type  = 'standard';       % 'simplified' (only children functions) or 'standard' (full basis)
@@ -96,7 +96,8 @@ hspace   = hierarchical_space (hmsh, space, method_data.space_type, method_data.
 %% Add second and thrid level using THB-refinement
 % Second level
 marked_ref = cell(1, hspace.nlevels);
-marked_ref{1} = [2 3 4];
+marked_ref{1} = [2 3];
+marked_ref{2} = [];
 [hmsh, hspace, ~] = adaptivity_refine (hmsh, hspace, marked_ref, adaptivity_data);
 hmsh_plot_cells (hmsh, 20, 1 );
 
@@ -109,8 +110,16 @@ hmsh.nel_per_level(hmsh.nlevels) = 0;
 hmsh.mesh_of_level(hmsh.nlevels) = msh_refine (hmsh.mesh_of_level(hmsh.nlevels-1), hmsh.nsub);
 hmsh.msh_lev{hmsh.nlevels} = [];
 
+% Third level
+marked_ref = cell(1, hspace.nlevels);
+marked_ref{1} = [];
+marked_ref{2} = [3 4];
+marked_ref{3} = [];
+[hmsh, hspace, ~] = adaptivity_refine (hmsh, hspace, marked_ref, adaptivity_data);
+hmsh_plot_cells (hmsh, 20, 1 );
+
 % assign dofs
-hspace.dofs = [0 0.6 1.2 0.8 1.4 1.6 0.75 0.25 0.0]';
+hspace.dofs = [0 0.5 1.2 0.8 1.4 1.6 0.75 0.25 0.0]';
 initial_values = hspace.dofs;
 
 % plot initial state
@@ -120,7 +129,7 @@ figure(6); plot (squeeze(F(1,:,:)), eu)
 
 %% Refinement
 marked_ref{1} = [];
-marked_ref{2} = [3 4 5 6 7 8];
+marked_ref{2} = [5 6];
 marked_ref{3} = [];
 [hmsh, hspace, Cref] = adaptivity_refine (hmsh, hspace, marked_ref, adaptivity_data);
 hmsh_plot_cells (hmsh, 20, (figure(2)));
@@ -131,71 +140,63 @@ npts = [plot_data.npoints_x];
 [eu_ref, F] = sp_eval (u_ref, hspace, geometry, npts);
 figure(7); plot (squeeze(F(1,:,:)), eu_ref)
 
-% marked_ref{1} = [];
-% marked_ref{2} = [];
-% marked_ref{3} = [5 6 7 8 9 10 11 12];
-% marked_ref{4} = [];
-% [hmsh, hspace, Cref] = adaptivity_refine (hmsh, hspace, marked_ref, adaptivity_data);
-% hmsh_plot_cells (hmsh, 20, (figure(3)));
-% u_ref_2 = Cref*u_ref;
-% hspace.dofs = u_ref_2;
-% 
-% % plot refined state
-% npts = [plot_data.npoints_x];
-% [eu_ref, F] = sp_eval (hspace.dofs, hspace, geometry, npts);
-% figure(8); plot (squeeze(F(1,:,:)), eu_ref)
+marked_ref{1} = [];
+marked_ref{2} = [];
+marked_ref{3} = [5 6];
+marked_ref{4} = [];
+[hmsh, hspace, Cref] = adaptivity_refine (hmsh, hspace, marked_ref, adaptivity_data);
+hmsh_plot_cells (hmsh, 20, (figure(3)));
+u_ref_2 = Cref*u_ref;
+hspace.dofs = u_ref_2;
+
+% plot refined state
+npts = [plot_data.npoints_x];
+[eu_ref, F] = sp_eval (hspace.dofs, hspace, geometry, npts);
+figure(8); plot (squeeze(F(1,:,:)), eu_ref)
 
 
 %% Coarsening back to the initial state
+marked_coarse{1} = [];
+marked_coarse{2} = [];
+marked_coarse{3} = [9 10 11 12];
+marked_coarse{4} = [9 10 11 12];
+[hmsh, hspace, u] = adaptivity_coarsen(hmsh, hspace, marked_coarse, adaptivity_data);
+hspace.dofs = u;
+hmsh_plot_cells (hmsh, 20, (figure(4)));
+
 % marked_coarse{1} = [];
 % marked_coarse{2} = [];
 % marked_coarse{3} = [];
-% marked_coarse{4} = [ 9 10 11 12];
+% marked_coarse{4} = [9 10 11 12];
 % [hmsh, hspace, u] = adaptivity_coarsen(hmsh, hspace, marked_coarse, adaptivity_data);
 % hspace.dofs = u;
 % hmsh_plot_cells (hmsh, 20, (figure(4)));
-% 
-% 
-% % plot coarse state
-% npts = [plot_data.npoints_x];
-% [eu, F] = sp_eval (u, hspace, geometry, npts);
-% figure(9); plot (squeeze(F(1,:,:)), eu)
-
-marked_coarse{1} = [];
-marked_coarse{2} = [];
-marked_coarse{3} = [ 5 6 7 8 9 10 11 12 13 14 15 16];
-%%%%%%%%
-hspace.dofs = u_ref;
-%%%%%%%%
-[hmsh, hspace, u] = adaptivity_coarsen(hmsh, hspace, marked_coarse, adaptivity_data);
-hmsh_plot_cells (hmsh, 20, (figure(5)));
-
 
 % plot coarse state
 npts = [plot_data.npoints_x];
 [eu, F] = sp_eval (u, hspace, geometry, npts);
-figure(10); plot (squeeze(F(1,:,:)), eu)
+figure(9); plot (squeeze(F(1,:,:)), eu)
 
-% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % marked_coarse{1} = [];
 % marked_coarse{2} = [];
-% marked_coarse{3} = [11 12 13 14 15 16];
-% %%%%%%%%
-% hspace.dofs = u;
-% %%%%%%%%
+% marked_coarse{3} = [5 6 7 8];
 % [hmsh, hspace, u] = adaptivity_coarsen(hmsh, hspace, marked_coarse, adaptivity_data);
-% hmsh_plot_cells (hmsh, 20, (figure(11)));
+% hspace.dofs = u;
+% hmsh_plot_cells (hmsh, 20, (figure(5)));
 % 
 % 
 % % plot coarse state
 % npts = [plot_data.npoints_x];
 % [eu, F] = sp_eval (u, hspace, geometry, npts);
-% figure(12); plot (squeeze(F(1,:,:)), eu)
+% figure(10); plot (squeeze(F(1,:,:)), eu)
+
 
 %% Check
 
-if ~isequal(u, initial_values)
-    disp('is not a projector !');
-else
-    disp('is a projector !!!');
+for i=1:numel(u)
+    if (u(i) < initial_values(i)-eps(single(1/2)) || u(i) > initial_values(i)+eps(single(1/2)))
+        disp('is not a projector !');
+    else
+        disp('O.K.');
+    end
 end
