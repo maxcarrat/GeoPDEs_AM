@@ -58,8 +58,8 @@ method_data.truncated   = 1;                % 0: False, 1: True
 
 % ADAPTIVITY PARAMETERS
 clear adaptivity_data
-adaptivity_data.flag = 'elements';
-% adaptivity_data.flag = 'functions';
+% adaptivity_data.flag = 'elements';
+adaptivity_data.flag = 'functions';
 adaptivity_data.C0_est = 1.0;
 adaptivity_data.mark_param = 0.75;
 adaptivity_data.mark_param_coarsening = 0.01;
@@ -96,7 +96,9 @@ hspace   = hierarchical_space (hmsh, space, method_data.space_type, method_data.
 %% Add second and thrid level using THB-refinement
 % Second level
 marked_ref = cell(1, hspace.nlevels);
-marked_ref{1} = [2 3];
+% marked_ref{1} = [2 3];
+marked_ref{1} = [4 5];
+
 marked_ref{2} = [];
 [hmsh, hspace, ~] = adaptivity_refine (hmsh, hspace, marked_ref, adaptivity_data);
 hmsh_plot_cells (hmsh, 20, 1 );
@@ -110,17 +112,20 @@ hmsh.nel_per_level(hmsh.nlevels) = 0;
 hmsh.mesh_of_level(hmsh.nlevels) = msh_refine (hmsh.mesh_of_level(hmsh.nlevels-1), hmsh.nsub);
 hmsh.msh_lev{hmsh.nlevels} = [];
 
-% Third level
-marked_ref = cell(1, hspace.nlevels);
-marked_ref{1} = [];
-marked_ref{2} = [3 4];
-marked_ref{3} = [];
-[hmsh, hspace, ~] = adaptivity_refine (hmsh, hspace, marked_ref, adaptivity_data);
-hmsh_plot_cells (hmsh, 20, 1 );
+% % Third level
+% marked_ref = cell(1, hspace.nlevels);
+% marked_ref{1} = [];
+% % marked_ref{2} = [3 4];
+% marked_ref{2} = [5];
+% 
+% marked_ref{3} = [];
+% [hmsh, hspace, ~] = adaptivity_refine (hmsh, hspace, marked_ref, adaptivity_data);
+% hmsh_plot_cells (hmsh, 20, 1 );
 
 % assign dofs
-hspace.dofs = [0 0.5 1.2 0.8 1.4 1.6 0.75 0.25 0.0]';
-initial_values = hspace.dofs;
+initial_values = [0 1.2 0.8 1.4 1.6 0.25 0.0]';
+hspace.dofs = initial_values;
+% u_ref = initial_values;
 
 % plot initial state
 npts = [plot_data.npoints_x];
@@ -129,11 +134,13 @@ figure(6); plot (squeeze(F(1,:,:)), eu)
 
 %% Refinement
 marked_ref{1} = [];
-marked_ref{2} = [5 6];
+% marked_ref{2} = [5 6];
+marked_ref{2} = [5];
 marked_ref{3} = [];
 [hmsh, hspace, Cref] = adaptivity_refine (hmsh, hspace, marked_ref, adaptivity_data);
 hmsh_plot_cells (hmsh, 20, (figure(2)));
 u_ref = Cref*initial_values;
+hspace.dofs = u_ref;
 
 % plot refined state
 npts = [plot_data.npoints_x];
@@ -142,12 +149,13 @@ figure(7); plot (squeeze(F(1,:,:)), eu_ref)
 
 marked_ref{1} = [];
 marked_ref{2} = [];
-marked_ref{3} = [5 6];
+% marked_ref{3} = [5 6];
+marked_ref{3} = [7];
+
 marked_ref{4} = [];
 [hmsh, hspace, Cref] = adaptivity_refine (hmsh, hspace, marked_ref, adaptivity_data);
 hmsh_plot_cells (hmsh, 20, (figure(3)));
-u_ref_2 = Cref*u_ref;
-hspace.dofs = u_ref_2;
+hspace.dofs = Cref*u_ref;
 
 % plot refined state
 npts = [plot_data.npoints_x];
@@ -158,20 +166,20 @@ figure(8); plot (squeeze(F(1,:,:)), eu_ref)
 %% Coarsening back to the initial state
 marked_coarse{1} = [];
 marked_coarse{2} = [];
-marked_coarse{3} = [9 10 11 12];
-marked_coarse{4} = [9 10 11 12];
+marked_coarse{3} = [];
+marked_coarse{4} = [11 12 13 14];
 [hmsh, hspace, u] = adaptivity_coarsen(hmsh, hspace, marked_coarse, adaptivity_data);
 hspace.dofs = u;
 hmsh_plot_cells (hmsh, 20, (figure(4)));
 
-% marked_coarse{1} = [];
-% marked_coarse{2} = [];
-% marked_coarse{3} = [];
-% marked_coarse{4} = [9 10 11 12];
-% [hmsh, hspace, u] = adaptivity_coarsen(hmsh, hspace, marked_coarse, adaptivity_data);
-% hspace.dofs = u;
-% hmsh_plot_cells (hmsh, 20, (figure(4)));
+marked_coarse{1} = [];
+marked_coarse{2} = [];
+marked_coarse{3} = [7 8 9 10];
+[hmsh, hspace, u] = adaptivity_coarsen(hmsh, hspace, marked_coarse, adaptivity_data);
+hspace.dofs = u;
+hmsh_plot_cells (hmsh, 20, (figure(4)));
 
+% plot coarse state
 % plot coarse state
 npts = [plot_data.npoints_x];
 [eu, F] = sp_eval (u, hspace, geometry, npts);

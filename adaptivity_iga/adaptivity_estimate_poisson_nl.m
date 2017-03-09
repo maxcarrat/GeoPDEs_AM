@@ -98,7 +98,7 @@ switch adaptivity_data.flag
                 h = cat (1, h, hmsh.msh_lev{ilev}.element_size(:));
             end
         end
-        h = h * sqrt (hmsh.ndim);
+        h =  h * sqrt (hmsh.ndim);
         
         est = sqrt (sum (normalized_aux.*w));
         est = C0_est*h.*est(:);

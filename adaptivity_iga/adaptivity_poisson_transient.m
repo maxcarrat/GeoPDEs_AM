@@ -122,7 +122,7 @@ end
 number_ts = length(problem_data.time_discretization);
 u = ones(hspace.ndof, 1)*problem_data.initial_temperature;
 u_last = u;
-hspace.dofs = u; 
+hspace.dofs = u;
 
 % ==POST-PROCESSING INITIAL PROBLEM====================================================
 if (plot_data.print_info)
@@ -164,7 +164,7 @@ for itime = 1:number_ts-1
         %         fig_sol = figure(10000+itime);
         %     end
     end
- 
+    
     if (plot_data.print_info)
         fprintf('\n%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% Time step %d %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%\n',itime);
     end
@@ -181,7 +181,7 @@ for itime = 1:number_ts-1
             solution_data.flag = -1; break
         end
         
-%% SOLVE ==================================================================
+        %% SOLVE ==================================================================
         if (plot_data.print_info)
             disp('SOLVE:')
             fprintf('Number of elements: %d. Total DOFs: %d \n', hmsh.nel, hspace.ndof);
@@ -195,16 +195,11 @@ for itime = 1:number_ts-1
         
         nel(iter) = hmsh.nel; ndof(iter) = hspace.ndof;
         
-        if (~(isempty(find(plot_data.time_steps_to_post_process==itime, 1))))
-            if (plot_data.plot_hmesh)
-                fig_mesh = hmsh_plot_cells (hmsh, 20, (fig_mesh) );
-            end
-        end
         
-%% ESTIMATE ===============================================================
+        %% ESTIMATE ===============================================================
         if (plot_data.print_info); fprintf('\n ESTIMATE: \n'); end
         est = adaptivity_estimate_poisson_nl(u, u_last, itime, hmsh, hspace, problem_data, adaptivity_data);
-%         est = adaptivity_estimate_gradient(u, itime, hmsh, hspace, problem_data, adaptivity_data);
+        %         est = adaptivity_estimate_gradient(u, itime, hmsh, hspace, problem_data, adaptivity_data);
         gest(iter) = norm (est);
         if (plot_data.print_info); fprintf('Computed error estimator: %f \n', gest(iter)); end
         if (isfield (problem_data, 'graduex'))
@@ -212,7 +207,7 @@ for itime = 1:number_ts-1
             if (plot_data.print_info); fprintf('Error in H1 seminorm = %g\n', err_h1s(iter)); end
         end
         
-% STOPPING CRITERIA -------------------------------------------------------
+        % STOPPING CRITERIA -------------------------------------------------------
         if (gest(iter) < adaptivity_data.tol)
             if (plot_data.print_info); disp('Success: The solution converge!!!'); end;
             hspace.dofs = u;
@@ -223,15 +218,15 @@ for itime = 1:number_ts-1
             break;
         elseif (hmsh.nel > adaptivity_data.max_nel)
             if (plot_data.print_info); disp('Warning: reached the maximum number of elements'); end;
-            hspace.dofs = u; 
+            hspace.dofs = u;
             break;
-         elseif (iter >= adaptivity_data.num_max_iter)
+        elseif (iter >= adaptivity_data.num_max_iter)
             if (plot_data.print_info); disp('Warning: reached the maximum number of iterations'); end;
-            hspace.dofs = u; 
+            hspace.dofs = u;
             break;
         end
-%% REFINEMENT =============================================================
-% MARK REFINEMENT
+        %% REFINEMENT =============================================================
+        % MARK REFINEMENT
         if (plot_data.print_info); disp('MARK REFINEMENT:'); end
         [marked_ref, num_marked_ref] = adaptivity_mark (est, hmsh, hspace, adaptivity_data);
         
@@ -255,7 +250,7 @@ for itime = 1:number_ts-1
             est = Cref * est;
         end;
         
-%% COARSENING =============================================================
+        %% COARSENING =============================================================
         % MARK COARSENING
         if (plot_data.print_info); disp('MARK COARSENING:'); end
         [marked_coarse, num_marked_coarse] = marking_for_coarsening (est, hmsh, hspace, adaptivity_data);
@@ -277,10 +272,10 @@ for itime = 1:number_ts-1
             hspace.dofs = u_last;
             [~, ~, u_last] = adaptivity_coarsen (hmsh, hspace, marked_coarse, adaptivity_data);
             
-%             if (plot_data.print_info); fprintf('\n Project estimated error \n'); end
-%             % project error onto new mesh
-%             hspace.dofs = est;
-%             [~, ~, est] = adaptivity_coarsen (hmsh, hspace, marked_coarse, adaptivity_data);
+            %             if (plot_data.print_info); fprintf('\n Project estimated error \n'); end
+            %             % project error onto new mesh
+            %             hspace.dofs = est;
+            %             [~, ~, est] = adaptivity_coarsen (hmsh, hspace, marked_coarse, adaptivity_data);
             
             hmsh = hmsh_coarse;
             hspace = hspace_coarse;
@@ -292,7 +287,7 @@ for itime = 1:number_ts-1
             %             end;
         end
         
-%% ========================================================================
+        %% ========================================================================
         
         if (plot_data.adaptivity)
             % ==POST-PROCESSING====================================================
@@ -307,6 +302,11 @@ for itime = 1:number_ts-1
             if strcmp(adaptivity_data.flag, 'functions')
                 output_file_est = sprintf(plot_data.file_name_err, iter);
                 sp_to_vtk (est, hspace, geometry, npts(1:hmsh.rdim), output_file_est, {'error'})
+            end
+            
+            % Plot Mesh
+            if (plot_data.plot_hmesh)
+                fig_mesh = hmsh_plot_cells (hmsh, 20, (fig_mesh) );
             end
             
             % Plot in Octave/Matlab
@@ -351,6 +351,11 @@ for itime = 1:number_ts-1
         if strcmp(adaptivity_data.flag, 'functions')
             output_file_est = sprintf(plot_data.file_name_err, itime);
             sp_to_vtk (est, hspace, geometry, npts(1:hmsh.rdim), output_file_est, {'error'})
+        end
+        
+        % Plot Mesh
+        if (plot_data.plot_hmesh)
+            fig_mesh = hmsh_plot_cells (hmsh, 20, (fig_mesh) );
         end
         
         % Plot in Octave/Matlab

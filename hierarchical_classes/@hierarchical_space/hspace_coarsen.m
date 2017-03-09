@@ -195,8 +195,9 @@ if (nargout == 2)
             % express lower levels funs as linear combination of funs of
             % level lev
             active_dofs_lc = hspace.Csub{lev+1}(:,1:ndof_above_lev)*hspace.dofs(1:ndof_above_lev);
-            % get cells to be activated in projection            
-            cells_activated_in_proj = reactivated_cell{lev};
+            % get cells to be activated in projection        
+            [active_cells_supp, ~] =sp_get_cells (hspace.space_of_level(lev), hmsh.mesh_of_level(lev), active_funs_supported{lev});
+            cells_activated_in_proj = union(reactivated_cell{lev}, active_cells_supp);
             % initialize temporary coarse dofs vector
             u_coarse_temp = cell(1, max(cells_activated_in_proj));
             % element dimensional scaling parameter
@@ -246,6 +247,8 @@ if (nargout == 2)
                 
                 %project
                 u_coarse_temp{cells_activated_in_proj(el)}(funs_projected) = u_coarse_temp{cells_activated_in_proj(el)}(funs_projected) + C*active_dofs_lc(funs_supported);
+                fun2reactivate = intersect(funs_on_reactivated_cells, funs_projected);
+                u_coarse{lev}(fun2reactivate) = u_coarse_temp{cells_activated_in_proj(el)}(fun2reactivate);
             end
             % end elements loop
             
@@ -253,7 +256,7 @@ if (nargout == 2)
             funs_to_smooth = union (active_funs_supported{lev}, funs_to_reactivate{lev});
             
             % smooth projected dofs
-            u_coarse{lev}(funs_to_smooth) = smooth_dofs (hspace, hmsh, u_coarse_temp, funs_to_smooth, lev, reactivated_cell);
+            u_coarse{lev}(funs_to_smooth) = smooth_dofs (hspace, hmsh, active, deactivated, u_coarse_temp, funs_to_smooth, lev);
             
             % ... else copy the level dof of the previous state
         else
@@ -276,7 +279,7 @@ hspace.coeff_pou = ones (hspace.ndof, 1);
 end
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-% function smoothed_dofs = smooth_dofs (hspace, hmsh, u_coarse, funs_to_smooth, level, reactivated_cell)
+% function smoothed_dofs = smooth_dofs (hspace, hmsh, u_coarse, funs_to_smooth, level)
 %
 % This function updates the active (hspace.active) and deactivated (hspace.deactivated) degrees of freedom,
 % reactivating the functions in marked_funs.
@@ -287,7 +290,6 @@ end
 %           u_coarse [1 x nel]:                    cell array of projected dofs over each target element
 %           removed_cells:                         cell array with the elements removed during coarsening, for each level
 %           level:                                 hierarchical mesh level
-%           reactivated_cell [1 x nlev]:           cell to reactivate
 %
 % Output:   smoothed_dofs:              array of smmothed dofs
 %
@@ -305,39 +307,47 @@ end
 %
 %    You should have received a copy of the GNU General Public License
 %    along with this program.  If not, see <http://www.gnu.org/licenses/>.
-function smoothed_dofs = smooth_dofs (hspace, hmsh, u_coarse, funs_to_smooth, level, reactivated_cell)
+function smoothed_dofs = smooth_dofs (hspace, hmsh, active, deactivated, u_coarse, funs_to_smooth, level)
 
-% % functions supports
-% [~, funs_support_index] = sp_get_cells (hspace.space_of_level(level), hmsh.mesh_of_level(level), funs_to_smooth);
-% % initialize smoothed dofs vector
-% smoothed_dofs = zeros(max(funs_to_smooth), 1);
-% % loop over functions to smooth
-% for i=1:numel(funs_to_smooth)
-%     w = wgheval_LLSQ( funs_support_index{i} );
-%     % loop over cell supports
-%     for j=1:numel(funs_support_index{i})
-%         smoothed_dofs(funs_to_smooth(i)) = smoothed_dofs(funs_to_smooth(i)) + u_coarse{funs_support_index{i}(j)}(funs_to_smooth(i))*w;
-%     end
-%     % end j loop
-% end
-% % end loop over funs to smooth
-% smoothed_dofs = smoothed_dofs(funs_to_smooth);
+% functions supports
+[~, funs_support_index] = sp_get_cells (hspace.space_of_level(level), hmsh.mesh_of_level(level), funs_to_smooth);
+[active_funs_supports, ~] = sp_get_cells (hspace.space_of_level(level), hmsh.mesh_of_level(level), active{level});
+[deactiveted_funs_supports, ~] = sp_get_cells (hspace.space_of_level(level), hmsh.mesh_of_level(level), deactivated{level});
 
-aux = zeros(numel(funs_to_smooth),1);
-assigned_indeces = zeros(numel(funs_to_smooth),1);
-for i=1:numel(u_coarse)
-    if ~isempty(u_coarse{i})
-        for j=1:numel(funs_to_smooth)
-            if ( isempty(intersect(j, assigned_indeces)) && ~isempty(find((u_coarse{i}(funs_to_smooth(j))), 1)) )
-                aux(j) = u_coarse{i}(funs_to_smooth(j));
-                assigned_indeces(j) = j;
-            end
-        end
-        
+% initialize smoothed dofs vector
+smoothed_dofs = zeros(max(funs_to_smooth), 1);
+% loop over functions to smooth
+for i=1:numel(funs_to_smooth)
+    % active cells
+    active_cells = setdiff(active_funs_supports, deactiveted_funs_supports);
+    % active index in funs support
+    index2smooth = intersect(funs_support_index{i}, active_cells);
+    % weights for smoothing
+    w = wgheval_LLSQ( index2smooth );
+    % loop over cell supports
+    for j=1:numel(index2smooth)
+        smoothed_dofs(funs_to_smooth(i)) = smoothed_dofs(funs_to_smooth(i)) + u_coarse{index2smooth(j)}(funs_to_smooth(i))*w;
     end
+    % end j loop
 end
-dofs = aux;
 % end loop over funs to smooth
-smoothed_dofs = dofs;
+smoothed_dofs = smoothed_dofs(funs_to_smooth);
+
+% aux = zeros(numel(funs_to_smooth),1);
+% assigned_indeces = zeros(numel(funs_to_smooth),1);
+% for i=1:numel(u_coarse)
+%     if ~isempty(u_coarse{i})
+%         for j=1:numel(funs_to_smooth)
+%             if ( isempty(intersect(j, assigned_indeces)) && ~isempty(find((u_coarse{i}(funs_to_smooth(j))), 1)) )
+%                 aux(j) = u_coarse{i}(funs_to_smooth(j));
+%                 assigned_indeces(j) = j;
+%             end
+%         end
+%         
+%     end
+% end
+% dofs = aux;
+% % end loop over funs to smooth
+% smoothed_dofs = dofs;
 
 end

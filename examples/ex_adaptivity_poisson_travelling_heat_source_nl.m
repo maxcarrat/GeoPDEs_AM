@@ -22,17 +22,17 @@ problem_data.nmnn_sides   = [];
 problem_data.drchlt_sides = [];
 
 % Physical parameters
-problem_data.c_diff  =   @(x,y) ones(size(x))*29; % @conductivity;%
+problem_data.c_diff  =   @(x,y) ones(size(x)) * 29.0; % @conductivity;%
 problem_data.grad_c_diff =  @(x,y) cat (1, ...
             reshape (zeros(size(x)), [1, size(x)]), ...
             reshape (zeros(size(x)), [1, size(x)]));
 %@conductivity_der;% 
-problem_data.c_cap = @(x,y) ones(size(x))*7820*600; % @capacity;% 
-problem_data.initial_temperature = 20;              %[°C]
+problem_data.c_cap = @(x,y) ones(size(x)) * 7820 * 600; % @capacity;% 
+problem_data.initial_temperature = 20;                  %[°C]
 
 
 % Time discretization
-n_time_steps = 20;
+n_time_steps = 400;
 time_end = 20;
 problem_data.time_discretization = linspace(0.0, time_end, n_time_steps + 1);
 
@@ -71,7 +71,7 @@ adaptivity_data.max_level = 5;
 adaptivity_data.max_ndof = 15000;
 adaptivity_data.num_max_iter = 20;
 adaptivity_data.max_nel = 15000;
-adaptivity_data.tol = 50.0e-06;
+adaptivity_data.tol = 5.0e-05;
 
 % GRAPHICS
 plot_data.plot_hmesh = true;
@@ -79,7 +79,7 @@ plot_data.adaptivity = false;
 plot_data.plot_discrete_sol = false;
 plot_data.print_info = true;
 plot_data.plot_matlab = true;
-plot_data.time_steps_to_post_process = [1, 5, 10, 15, 20];% linspace(1,n_time_steps,n_time_steps); % 
+plot_data.time_steps_to_post_process = [1, 50, 100, 150, 200, 250, 300, 350, 400]; % linspace(1,n_time_steps,n_time_steps); % 
 plot_data.file_name = strcat(problem_output.folder, '/poisson_adaptivity_Fachinotti20_travelling_heat_source_lumped_2D_%d.vts');
 plot_data.file_name_err = strcat(problem_output.folder, '/poisson_adaptivity_Fachinotti20_travelling_heat_source_lumped_2D_error_%d.vts');
 plot_data.npoints_x = 100;        %number of points x-direction in post-processing

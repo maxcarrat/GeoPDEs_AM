@@ -78,7 +78,7 @@ msh      = msh_cartesian (zeta, qn, qw, geometry);
 space    = sp_bspline (knots, degree, msh);
 
 % Initial solution
-u_prev = zeros(space.ndof, 1);
+u_prev = ones(space.ndof, 1)*problem_data.initial_temperature;
 
 % BACKWARD EULER LOOP
 for itime = 1:length(problem_data.time_discretization)-1
@@ -86,25 +86,11 @@ for itime = 1:length(problem_data.time_discretization)-1
    
     stiff_mat = op_gradu_gradv_tp(space, space, msh, problem_data.c_diff);
     mass_mat = op_u_v_tp(space, space, msh, problem_data.c_cap);
+    mass_mat = diag(sum(mass_mat));
     rhs = op_f_v_time_tp(space, msh, problem_data, itime);
     
     % Apply Neumann boundary conditions
-    for iside = nmnn_sides
-        if (msh.ndim > 1)
-            % Restrict the function handle to the specified side, in any dimension, gside = @(x,y) g(x,y,iside)
-            gside = @(varargin) g(varargin{:},iside);
-            dofs = space.boundary(iside).dofs;
-            rhs(dofs) = rhs(dofs) + op_f_v_tp (space.boundary(iside), msh.boundary(iside), gside);
-        else
-            if (iside == 1)
-                x = msh.breaks{1}(1);
-            else
-                x = msh.breaks{1}(end);
-            end
-            sp_side = space.boundary(iside);
-            rhs(sp_side.dofs) = rhs(sp_side.dofs) + g(x,iside);
-        end
-    end
+    % Not implemented Neumann boundaries for this problem !!!
     
     % Apply Dirichlet boundary conditions
     if ~isempty(problem_data.h)
@@ -120,14 +106,16 @@ for itime = 1:length(problem_data.time_discretization)-1
         lhs = mass_mat(int_dofs, int_dofs) - stiff_mat(int_dofs, int_dofs) * delta_t;
         u(int_dofs) =  lhs\ rhs(int_dofs);
     else
-        rhs = rhs + mass_mat * u_prev;
         
         % Solve the linear system
-        delta_t = problem_data.time_discretization(itime+1) - problem_data.time_discretization(itime+1);
-        lhs = mass_mat - stiff_mat * delta_t;
+        delta_t = problem_data.time_discretization(itime+1) - problem_data.time_discretization(itime);
+        lhs = mass_mat + stiff_mat * delta_t;
+        rhs = rhs * delta_t + mass_mat * u_prev;
+
         u =  lhs\ rhs;
-        u_prev = u;
     end
+    % update dofs
+    u_prev = u;
     
 end % END TIME INTEGRATION LOOP
 

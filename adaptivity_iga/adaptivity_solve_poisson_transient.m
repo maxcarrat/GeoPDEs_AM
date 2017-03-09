@@ -87,12 +87,12 @@ if ~isempty(problem_data.h)
     u = zeros (hspace.ndof, 1);
     [u_dirichlet, dirichlet_dofs] = sp_drchlt_l2_proj (hspace, hmsh, problem_data.h, problem_data.drchlt_sides);
     u(dirichlet_dofs) = u_dirichlet;
-    
+    delta_t = problem_data.time_discretization(time_step)-problem_data.time_discretization(time_step+1);
+
     int_dofs = setdiff (1:hspace.ndof, dirichlet_dofs);
-    rhs(int_dofs) = rhs(int_dofs) - stiff_mat(int_dofs, dirichlet_dofs)*u(dirichlet_dofs) + mass_mat(int_dofs, int_dofs)*u_prev(int_dofs);
+    rhs(int_dofs) = rhs(int_dofs) * delta_t + mass_mat(int_dofs, int_dofs)*u_prev(int_dofs);
     
     % Solve the linear system
-    delta_t = problem_data.time_discretization(time_step)-problem_data.time_discretization(time_step+1);
     lhs = mass_mat(int_dofs, int_dofs) - stiff_mat(int_dofs, int_dofs) * delta_t;
     u(int_dofs) =  lhs\ rhs(int_dofs);
 else
@@ -101,7 +101,7 @@ else
     if ~isempty(hspace.dofs)
         rhs = rhs * delta_t + mass_mat * hspace.dofs;
     else
-        rhs = rhs * delta_t ;
+        rhs = rhs * delta_t;
     end
     % Solve the linear system
     lhs = mass_mat + stiff_mat * delta_t;
