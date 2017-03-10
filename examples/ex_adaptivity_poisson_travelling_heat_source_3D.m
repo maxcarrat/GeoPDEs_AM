@@ -12,6 +12,9 @@ mkdir(problem_output.folder);
 % if true the non-linear solver is used
 problem_data.flag_nl = false;
 
+% Set lumped matrix
+problem_data.lumped = false;
+
 % Non-linear analysis
 problem_data.Newton_tol = 1.0e-06;
 problem_data.num_Newton_iter = 10;
@@ -83,8 +86,8 @@ plot_data.plot_discrete_sol = false;
 plot_data.print_info = true;
 plot_data.plot_matlab = false;
 plot_data.time_steps_to_post_process = [1,50,100,150,200,250,300,350,400];%linspace(1,n_time_steps,n_time_steps);%
-plot_data.file_name = strcat(problem_output.folder, '/poisson_adaptivity_Fachinotti_travelling_heat_source_3D_lumped_%d.vts');
-plot_data.file_name_err = strcat(problem_output.folder, '/poisson_adaptivity_Fachinotti_travelling_heat_source_3D_lumped_error_%d.vts');
+plot_data.file_name = strcat(problem_output.folder, '/poisson_adaptivity_Fachinotti_travelling_heat_source_3D_%d.vts');
+plot_data.file_name_err = strcat(problem_output.folder, '/poisson_adaptivity_Fachinotti_travelling_heat_source_3D_error_%d.vts');
 plot_data.npoints_x = 101;       %number of points x-direction in post-processing
 plot_data.npoints_y = 101;       %number of points x-direction in post-processing
 plot_data.npoints_z = 11;        %number of points x-direction in post-processing
