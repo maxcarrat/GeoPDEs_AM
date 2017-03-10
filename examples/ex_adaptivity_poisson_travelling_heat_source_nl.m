@@ -48,6 +48,7 @@ problem_data.path = [x_path', y_path'];
 % Source and boundary terms
 problem_data.f = moving_heat_source;        % Body Load
 problem_data.h = [];                        % Dirichlet Boundaries
+problem_data.g = [];                        % Neumann Boundaries
 
 % CHOICE OF THE DISCRETIZATION PARAMETERS (Coarse mesh)
 clear method_data

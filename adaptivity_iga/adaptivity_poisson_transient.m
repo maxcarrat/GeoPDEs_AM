@@ -146,6 +146,7 @@ if (plot_data.plot_matlab)
         [eu, F] = sp_eval (hspace.dofs, hspace, geometry, npts);
         figure(1000 + 0); surf (squeeze(F(1,:,:)), squeeze(F(2,:,:)), eu)
     else
+        npts = [plot_data.npoints_x plot_data.npoints_y plot_data.npoints_z];
         [eu, F] = sp_eval (hspace.dofs, hspace, geometry, npts);
         figure(1000 + 0); surf (squeeze(F(1,:,:)), squeeze(F(2,:,:)), squeeze(F(3,:,:)), eu)
     end
@@ -370,6 +371,7 @@ for itime = 1:number_ts-1
                 [eu, F] = sp_eval (u, hspace, geometry, npts);
                 figure(1000 + itime); surf (squeeze(F(1,:,:)), squeeze(F(2,:,:)), eu)
             else
+                npts = [plot_data.npoints_x plot_data.npoints_y plot_data.npoints_z];
                 [eu, F] = sp_eval (u, hspace, geometry, npts);
                 figure(1000 + itime); surf (squeeze(F(1,:,:)), squeeze(F(2,:,:)), squeeze(F(3,:,:)), eu)
             end

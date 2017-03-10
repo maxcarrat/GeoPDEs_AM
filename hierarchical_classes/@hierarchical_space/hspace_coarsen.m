@@ -221,6 +221,7 @@ if (nargout == 2)
                 % get indeces for projection
                 [I,J,K] = ind2sub(nel_dir{lev+1}, children_cells);
                 children_cells_unidim_indeces = [I, J, K];
+                % check size of cells_activated_in_proj
                 if (size(cells_activated_in_proj,2) < size(cells_activated_in_proj, 1))
                     cells_activated_in_proj = cells_activated_in_proj';
                 end
@@ -247,8 +248,6 @@ if (nargout == 2)
                 
                 %project
                 u_coarse_temp{cells_activated_in_proj(el)}(funs_projected) = u_coarse_temp{cells_activated_in_proj(el)}(funs_projected) + C*active_dofs_lc(funs_supported);
-                fun2reactivate = intersect(funs_on_reactivated_cells, funs_projected);
-                u_coarse{lev}(fun2reactivate) = u_coarse_temp{cells_activated_in_proj(el)}(fun2reactivate);
             end
             % end elements loop
             
@@ -291,7 +290,7 @@ end
 %           removed_cells:                         cell array with the elements removed during coarsening, for each level
 %           level:                                 hierarchical mesh level
 %
-% Output:   smoothed_dofs:              array of smmothed dofs
+% Output:   smoothed_dofs:              array of smoothed dofs
 %
 % Copyright (C) 2017 Massimo Carraturo
 %
@@ -332,22 +331,5 @@ for i=1:numel(funs_to_smooth)
 end
 % end loop over funs to smooth
 smoothed_dofs = smoothed_dofs(funs_to_smooth);
-
-% aux = zeros(numel(funs_to_smooth),1);
-% assigned_indeces = zeros(numel(funs_to_smooth),1);
-% for i=1:numel(u_coarse)
-%     if ~isempty(u_coarse{i})
-%         for j=1:numel(funs_to_smooth)
-%             if ( isempty(intersect(j, assigned_indeces)) && ~isempty(find((u_coarse{i}(funs_to_smooth(j))), 1)) )
-%                 aux(j) = u_coarse{i}(funs_to_smooth(j));
-%                 assigned_indeces(j) = j;
-%             end
-%         end
-%         
-%     end
-% end
-% dofs = aux;
-% % end loop over funs to smooth
-% smoothed_dofs = dofs;
 
 end

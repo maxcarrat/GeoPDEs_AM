@@ -43,7 +43,7 @@ method_data.nquad      = [3 3];       % Points for the Gaussian quadrature rule
 % GRAPHICS
 plot_data.plot_hmesh = true;
 plot_data.plot_discrete_sol = false;
-plot_data.print_info = false;
+plot_data.print_info = true;
 
 [geometry, msh, space, u] = solve_poisson_transient (problem_data, method_data);
 

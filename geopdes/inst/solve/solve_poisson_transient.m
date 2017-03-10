@@ -5,8 +5,8 @@
 % The function solves the diffusion problem
 %
 %  c d(u)/dt  - div ( epsilon(x) grad (u)) = f(t)    in Omega = F((0,1)^n)
-%                             epsilon(x) du/dn = g       on Gamma_N
-%                                            u = h       on Gamma_D
+%                         epsilon(x) du/dn = g       on Gamma_N
+%                                        u = h       on Gamma_D
 %
 % USAGE:
 %
@@ -83,37 +83,48 @@ u_prev = ones(space.ndof, 1)*problem_data.initial_temperature;
 % BACKWARD EULER LOOP
 for itime = 1:length(problem_data.time_discretization)-1
     fprintf('\n%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% Time step %d %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%\n',itime);
-   
+    
     stiff_mat = op_gradu_gradv_tp(space, space, msh, problem_data.c_diff);
     mass_mat = op_u_v_tp(space, space, msh, problem_data.c_cap);
     mass_mat = diag(sum(mass_mat));
     rhs = op_f_v_time_tp(space, msh, problem_data, itime);
     
     % Apply Neumann boundary conditions
-    % Not implemented Neumann boundaries for this problem !!!
+    for iside = nmnn_sides
+        if (msh.ndim > 1)
+            % Restrict the function handle to the specified side, in any dimension, gside = @(x,y) g(x,y,iside)
+            gside = @(varargin) g(varargin{:},iside);
+            dofs = space.boundary(iside).dofs;
+            rhs(dofs) = rhs(dofs) + op_f_v_time_tp (space.boundary(iside), msh.boundary(iside), problem_data, gside);
+        else
+            if (iside == 1)
+                x = msh.breaks{1}(1);
+            else
+                x = msh.breaks{1}(end);
+            end
+            sp_side = space.boundary(iside);
+            rhs(sp_side.dofs) = rhs(sp_side.dofs) + g(x,iside);
+        end
+    end
     
     % Apply Dirichlet boundary conditions
-    if ~isempty(problem_data.h)
-        u = zeros (space.ndof, 1);
-        [u_drchlt, drchlt_dofs] = sp_drchlt_l2_proj (space, msh, h, drchlt_sides);
-        u(drchlt_dofs) = u_drchlt;
-        
-        int_dofs = setdiff (1:space.ndof, drchlt_dofs);
-        rhs(int_dofs) = rhs(int_dofs) - stiff_mat(int_dofs, drchlt_dofs)*u(drchlt_dofs) + mass_mat(int_dofs, int_dofs)*u_prev(int_dofs);
-        
-        % Solve the linear system
-        delta_t = problem_data.time_discretization(itime)-problem_data.time_discretization(itime+1);
-        lhs = mass_mat(int_dofs, int_dofs) - stiff_mat(int_dofs, int_dofs) * delta_t;
-        u(int_dofs) =  lhs\ rhs(int_dofs);
+    u = zeros (space.ndof, 1);
+    [u_drchlt, drchlt_dofs] = sp_drchlt_l2_proj (space, msh, h, drchlt_sides);
+    u(drchlt_dofs) = u_drchlt;
+    
+    int_dofs = setdiff (1:space.ndof, drchlt_dofs);
+    delta_t = problem_data.time_discretization(itime+1)-problem_data.time_discretization(itime);
+    
+    if ~isempty(drchlt_dofs)
+        rhs(int_dofs) = rhs(int_dofs) * delta_t - stiff_mat(int_dofs, drchlt_dofs)*u(drchlt_dofs) * delta_t + mass_mat(int_dofs, int_dofs)*u_prev(int_dofs);
     else
-        
-        % Solve the linear system
-        delta_t = problem_data.time_discretization(itime+1) - problem_data.time_discretization(itime);
-        lhs = mass_mat + stiff_mat * delta_t;
-        rhs = rhs * delta_t + mass_mat * u_prev;
-
-        u =  lhs\ rhs;
+        rhs(int_dofs) = rhs(int_dofs) * delta_t + mass_mat(int_dofs, int_dofs)*u_prev(int_dofs);
     end
+    
+    % Solve the linear system
+    lhs = mass_mat(int_dofs, int_dofs) + stiff_mat(int_dofs, int_dofs) * delta_t;
+    u(int_dofs) =  lhs\ rhs(int_dofs);
+    
     % update dofs
     u_prev = u;
     
