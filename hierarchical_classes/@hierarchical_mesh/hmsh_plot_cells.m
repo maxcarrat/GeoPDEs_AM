@@ -68,7 +68,7 @@ for ilev = 1:hmsh.nlevels
       plot3 (x{1}([1 end],:), x{2}([1 end],:), x{3}([1 end],:), 'k', 'Marker', 'x');
       hold on
       plot3 (x{1}, x{2}, x{3}, 'k-');
-    elseif (hmsh.ndim == 2 || hmsh.ndim == 3)
+    elseif (hmsh.ndim == 2)% || hmsh.ndim == 3)
       for iel = 1:msh_level.nel
         plot3 (x{1}(1,:,iel), x{2}(1,:,iel), x{3}(1,:,iel), 'k');
         hold on
@@ -76,21 +76,57 @@ for ilev = 1:hmsh.nlevels
         plot3 (x{1}(:,1,iel), x{2}(:,1,iel), x{3}(:,1,iel), 'k');
         plot3 (x{1}(:,end,iel), x{2}(:,end,iel), x{3}(:,end,iel), 'k');
       end
-    elseif (hmsh.ndim == 4)
+    elseif (hmsh.ndim == 3)
       for iel = 1:msh_level.nel
-        plot3 (x{1}(1,1,:,iel), x{2}(1,1,:,iel), x{3}(1,1,:,iel), 'k');
+        x1 = reshape(x{1}(1,1,:,iel),[1 size(x{1},3)]);
+        x2 = reshape(x{2}(1,1,:,iel),[1 size(x{2},3)]);
+        x3 = reshape(x{3}(1,1,:,iel),[1 size(x{3},3)]);
+        plot3 (x1, x2, x3, 'k');
         hold on
-        plot3 (x{1}(end,1,:,iel), x{2}(end,1,:,iel), x{3}(end,1,:,iel), 'k');
-        plot3 (x{1}(1,end,:,iel), x{2}(1,end,:,iel), x{3}(1,end,:,iel), 'k');
-        plot3 (x{1}(end,end,:,iel), x{2}(end,end,:,iel), x{3}(end,end,:,iel), 'k');
-        plot3 (x{1}(1,:,1,iel), x{2}(1,:,1,iel), x{3}(1,:,1,iel), 'k');
-        plot3 (x{1}(end,:,1,iel), x{2}(end,:,1,iel), x{3}(end,:,1,iel), 'k');
-        plot3 (x{1}(1,:,end,iel), x{2}(1,:,end,iel), x{3}(1,:,end,iel), 'k');
-        plot3 (x{1}(end,:,end,iel), x{2}(end,:,end,iel), x{3}(end,:,end,iel), 'k');
-        plot3 (x{1}(:,1,1,iel), x{2}(:,1,1,iel), x{3}(:,1,1,iel), 'k');
-        plot3 (x{1}(:,end,1,iel), x{2}(:,end,1,iel), x{3}(:,end,1,iel), 'k');
-        plot3 (x{1}(:,1,end,iel), x{2}(:,1,end,iel), x{3}(:,1,end,iel), 'k');
-        plot3 (x{1}(:,end,end,iel), x{2}(:,end,end,iel), x{3}(:,end,end,iel), 'k');
+        x1 = reshape(x{1}(end,1,:,iel),[1 size(x{1},3)]);
+        x2 = reshape(x{2}(end,1,:,iel),[1 size(x{2},3)]);
+        x3 = reshape(x{3}(end,1,:,iel),[1 size(x{3},3)]);
+        plot3 (x1, x2, x3, 'k');
+        x1 = reshape(x{1}(1,end,:,iel),[1 size(x{1},3)]);
+        x2 = reshape(x{2}(1,end,:,iel),[1 size(x{2},3)]);
+        x3 = reshape(x{3}(1,end,:,iel),[1 size(x{3},3)]);
+        plot3 (x1, x2, x3, 'k');
+        x1 = reshape(x{1}(end,end,:,iel),[1 size(x{1},3)]);
+        x2 = reshape(x{2}(end,end,:,iel),[1 size(x{2},3)]);
+        x3 = reshape(x{3}(end,end,:,iel),[1 size(x{3},3)]);
+        plot3 (x1, x2, x3, 'k');
+        x1 = reshape(x{1}(1,:,1,iel),[1 size(x{1},3)]);
+        x2 = reshape(x{2}(1,:,1,iel),[1 size(x{2},3)]);
+        x3 = reshape(x{3}(1,:,1,iel),[1 size(x{3},3)]);
+        plot3 (x1, x2, x3, 'k');
+        x1 = reshape(x{1}(end,:,1,iel),[1 size(x{1},3)]);
+        x2 = reshape(x{2}(end,:,1,iel),[1 size(x{2},3)]);
+        x3 = reshape(x{3}(end,:,1,iel),[1 size(x{3},3)]);
+        plot3 (x1, x2, x3, 'k');
+        x1 = reshape(x{1}(1,:,end,iel),[1 size(x{1},3)]);
+        x2 = reshape(x{2}(1,:,end,iel),[1 size(x{2},3)]);
+        x3 = reshape(x{3}(1,:,end,iel),[1 size(x{3},3)]);
+        plot3 (x1, x2, x3, 'k');
+        x1 = reshape(x{1}(end,:,end,iel),[1 size(x{1},3)]);
+        x2 = reshape(x{2}(end,:,end,iel),[1 size(x{2},3)]);
+        x3 = reshape(x{3}(end,:,end,iel),[1 size(x{3},3)]);
+        plot3 (x1, x2, x3, 'k');
+        x1 = reshape(x{1}(:,1,1,iel),[1 size(x{1},3)]);
+        x2 = reshape(x{2}(:,1,1,iel),[1 size(x{2},3)]);
+        x3 = reshape(x{3}(:,1,1,iel),[1 size(x{3},3)]);
+        plot3 (x1, x2, x3, 'k');
+        x1 = reshape(x{1}(:,end,1,iel),[1 size(x{1},3)]);
+        x2 = reshape(x{2}(:,end,1,iel),[1 size(x{2},3)]);
+        x3 = reshape(x{3}(:,end,1,iel),[1 size(x{3},3)]);
+        plot3 (x1, x2, x3, 'k');
+        x1 = reshape(x{1}(:,1,end,iel),[1 size(x{1},3)]);
+        x2 = reshape(x{2}(:,1,end,iel),[1 size(x{2},3)]);
+        x3 = reshape(x{3}(:,1,end,iel),[1 size(x{3},3)]);
+        plot3 (x1, x2, x3, 'k');
+        x1 = reshape(x{1}(:,end,end,iel),[1 size(x{1},3)]);
+        x2 = reshape(x{2}(:,end,end,iel),[1 size(x{2},3)]);
+        x3 = reshape(x{3}(:,end,end,iel),[1 size(x{3},3)]);
+        plot3 (x1, x2, x3, 'k');
       end
     end
   end
