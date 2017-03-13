@@ -110,12 +110,32 @@ while (norm(res) > problem_data.Newton_tol)
         u(dirichlet_dofs) = u_dirichlet;
         
         int_dofs = setdiff (1:hspace.ndof, dirichlet_dofs);
-        rhs(int_dofs) = rhs(int_dofs) - stiff_mat(int_dofs, dirichlet_dofs)*u(dirichlet_dofs) + mass_mat(int_dofs, int_dofs)*u_prev(int_dofs);
+        delta_t = problem_data.time_discretization(time_step+1) - problem_data.time_discretization(time_step);
         
-        % Solve the linear system
-        delta_t = problem_data.time_discretization(time_step)-problem_data.time_discretization(time_step+1);
-        lhs = mass_mat(int_dofs, int_dofs) - stiff_mat(int_dofs, int_dofs) * delta_t;
-        u(int_dofs) =  lhs\ rhs(int_dofs);
+        %residuum
+        if (plot_data.print_info)
+            fprintf('\n \t Assembly residuum vector');
+        end
+        res = rhs(int_dofs) * delta_t - stiff_mat(int_dofs, dirichlet_dofs)*u(dirichlet_dofs) * delta_t +...
+            mass_mat(int_dofs, int_dofs)*u_0(int_dofs) - mass_mat(int_dofs, int_dofs)*u(int_dofs);
+        
+        %jacobian of the residuum
+        if (plot_data.print_info)
+            fprintf('\n \t Assembly tangent matrix');
+        end
+        J = stiff_mat(int_dofs, int_dofs) * delta_t + mass_mat(int_dofs, int_dofs);
+        
+        % compute temperature update
+        if (plot_data.print_info)
+            fprintf('\n \t Evaluate solution increment');
+        end
+        
+        delta_u = J \ res;
+        u(int_dofs) = u(int_dofs) + delta_u;
+        
+        if (plot_data.print_info)
+            fprintf('\n res norm = %d \n',norm(res));
+        end
     else
         
         delta_t = problem_data.time_discretization(time_step+1) - problem_data.time_discretization(time_step);

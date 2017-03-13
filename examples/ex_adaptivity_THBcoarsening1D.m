@@ -114,7 +114,7 @@ hmsh.msh_lev{hmsh.nlevels} = [];
 % Third level
 marked_ref = cell(1, hspace.nlevels);
 marked_ref{1} = [];
-marked_ref{2} = [4 5 6];
+marked_ref{2} = [4 5];
 marked_ref{3} = [];
 [hmsh, hspace, ~] = adaptivity_refine (hmsh, hspace, marked_ref, adaptivity_data);
 hmsh_plot_cells (hmsh, 20, 1 );
@@ -130,7 +130,7 @@ hmsh.msh_lev{hmsh.nlevels} = [];
 
 
 % assign dofs
-hspace.dofs = [0 0.5 1.2 0.8 0.3 1.6 0.75 0.3 0.25 0.0]';
+hspace.dofs = [0 0.5 1.2 0.8 0.3 1.6 0.75 0.3 0.0]';
 initial_values = hspace.dofs;
 
 % plot initial state

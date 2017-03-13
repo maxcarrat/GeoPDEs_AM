@@ -124,34 +124,6 @@ u = ones(hspace.ndof, 1)*problem_data.initial_temperature;
 u_last = u;
 hspace.dofs = u;
 
-% ==POST-PROCESSING INITIAL PROBLEM====================================================
-if (plot_data.print_info)
-    fprintf('\n%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% Post-Process initial problem %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%\n');
-end
-% EXPORT VTK FILE
-if (plot_data.print_info); fprintf('\n VTK Post-Process'); end
-npts = [plot_data.npoints_x plot_data.npoints_y plot_data.npoints_z];
-output_file = sprintf(plot_data.file_name, 0);
-sp_to_vtk (hspace.dofs, hspace, geometry, npts(1:hmsh.rdim), output_file, {'solution'}, {'value'})
-
-% Plot in Octave/Matlab
-if (plot_data.plot_matlab)
-    if (plot_data.print_info); fprintf('\n Octave Post-Process'); end
-    if hmsh.ndim == 1
-        npts = [plot_data.npoints_x];
-        [eu, F] = sp_eval (hspace.dofs, hspace, geometry, npts);
-        figure(1000 + 0); plot (squeeze(F(1,:,:)), eu)
-    elseif hmsh.ndim == 2
-        npts = [plot_data.npoints_x plot_data.npoints_y];
-        [eu, F] = sp_eval (hspace.dofs, hspace, geometry, npts);
-        figure(1000 + 0); surf (squeeze(F(1,:,:)), squeeze(F(2,:,:)), eu)
-    else
-        npts = [plot_data.npoints_x plot_data.npoints_y plot_data.npoints_z];
-        [eu, F] = sp_eval (hspace.dofs, hspace, geometry, npts);
-        figure(1000 + 0); surf (squeeze(F(1,:,:)), squeeze(F(2,:,:)), squeeze(F(3,:,:)), eu)
-    end
-end
-
 
 %% BACKWARD EULER =========================================================
 for itime = 1:number_ts-1
@@ -161,9 +133,6 @@ for itime = 1:number_ts-1
         if (plot_data.plot_hmesh)
             fig_mesh = figure(1+itime);
         end
-        %     if (plot_data.plot_discrete_sol)
-        %         fig_sol = figure(10000+itime);
-        %     end
     end
     
     if (plot_data.print_info)

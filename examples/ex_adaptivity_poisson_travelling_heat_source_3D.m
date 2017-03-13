@@ -70,19 +70,18 @@ clear adaptivity_data
 adaptivity_data.flag = 'elements';
 % adaptivity_data.flag = 'functions';
 adaptivity_data.C0_est = 1.0;
-adaptivity_data.mark_param = 0.75;
-adaptivity_data.mark_param_coarsening = 0.1;
+adaptivity_data.mark_param = 0.5;
+adaptivity_data.mark_param_coarsening = 0.25;
 adaptivity_data.mark_strategy = 'MS';
 adaptivity_data.max_level = 10;
 adaptivity_data.max_ndof = 15000;
 adaptivity_data.num_max_iter = 20;
 adaptivity_data.max_nel = 15000;
-adaptivity_data.tol = 2.0e-06;
+adaptivity_data.tol = 1.0e-06;
 
 % GRAPHICS
 plot_data.plot_hmesh = true;
 plot_data.adaptivity = false;
-plot_data.plot_discrete_sol = false;
 plot_data.print_info = true;
 plot_data.plot_matlab = false;
 plot_data.time_steps_to_post_process = [1,50,100,150,200,250,300,350,400];%linspace(1,n_time_steps,n_time_steps);%
