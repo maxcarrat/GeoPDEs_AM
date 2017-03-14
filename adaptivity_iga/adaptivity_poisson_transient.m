@@ -326,6 +326,7 @@ for itime = 1:number_ts-1
         % Plot Mesh
         if (plot_data.plot_hmesh)
             fig_mesh = hmsh_plot_cells (hmsh, 20, (fig_mesh) );
+            saveas((fig_mesh), sprintf(plot_data.file_name_mesh, itime),'m'); 
         end
         
         % Plot in Octave/Matlab

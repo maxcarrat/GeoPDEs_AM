@@ -102,7 +102,7 @@ switch adaptivity_data.flag
         
         est = sqrt (sum (normalized_aux.*w));
         est = C0_est*h.*est(:);
-        
+
     case 'functions'
         ms = zeros (hmsh.nlevels, 1);
         for ilev = 1:hmsh.nlevels
