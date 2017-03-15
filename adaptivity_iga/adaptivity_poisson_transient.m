@@ -136,7 +136,7 @@ for itime = 1:number_ts-1
     end
     
     if (plot_data.print_info)
-        fprintf('\n%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% Time step %d %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%\n',itime);
+        fprintf('\n%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% Time step %d/%d %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%\n',itime,number_ts-1);
     end
     
     
@@ -150,6 +150,12 @@ for itime = 1:number_ts-1
             disp('ERROR: The partition-of-the-unity property does not hold.')
             solution_data.flag = -1; break
         end
+ 
+%         if (hmsh.nlevels > adaptivity_data.max_level && iter > 2)
+%             if (plot_data.print_info); disp('Warning: reached the maximum number of levels'); end;
+%             hspace.dofs = u;
+%             break;
+%         end
         
         %% SOLVE ==================================================================
         if (plot_data.print_info)
@@ -177,6 +183,7 @@ for itime = 1:number_ts-1
             if (plot_data.print_info); fprintf('Error in H1 seminorm = %g\n', err_h1s(iter)); end
         end
         
+        
         % STOPPING CRITERIA -------------------------------------------------------
         if (gest(iter) < adaptivity_data.tol)
             if (plot_data.print_info); disp('Success: The solution converge!!!'); end;
@@ -198,8 +205,11 @@ for itime = 1:number_ts-1
         %% REFINEMENT =============================================================
         % MARK REFINEMENT
         if (plot_data.print_info); disp('MARK REFINEMENT:'); end
-        [marked_ref, num_marked_ref] = adaptivity_mark (est, hmsh, hspace, adaptivity_data);
-        
+        [marked_ref_err, ~] = adaptivity_mark (est, hmsh, hspace, adaptivity_data);
+        [marked_ref_geo, ~] = refine_toward_source (hmsh, hspace, itime, adaptivity_data, problem_data);
+        marked_ref = cellfun(@(marked_err,marked_geo) union(marked_err,marked_geo), marked_ref_err,marked_ref_geo,'UniformOutput',false);
+        num_marked_ref = sum(cellfun(@numel, marked_ref));
+
         % REFINE
         if (plot_data.print_info)
             fprintf('%d %s marked for refinement \n', num_marked_ref, adaptivity_data.flag);
@@ -224,7 +234,9 @@ for itime = 1:number_ts-1
         % MARK COARSENING
         if (plot_data.print_info); disp('MARK COARSENING:'); end
         [marked_coarse, num_marked_coarse] = marking_for_coarsening (est, hmsh, hspace, adaptivity_data);
-        
+%           [marked_coarse, num_marked_coarse] = coarse_toward_source (hmsh, hspace, itime, adaptivity_data, problem_data);
+
+          % coarse only after the first time step if it also refines
         if (itime > 1 && ~isempty(marked_coarse))
             % COARSE
             if (plot_data.print_info)
@@ -340,10 +352,6 @@ for itime = 1:number_ts-1
                 npts = [plot_data.npoints_x plot_data.npoints_y];
                 [eu, F] = sp_eval (u, hspace, geometry, npts);
                 figure(1000 + itime); surf (squeeze(F(1,:,:)), squeeze(F(2,:,:)), eu)
-            else
-                npts = [plot_data.npoints_x plot_data.npoints_y plot_data.npoints_z];
-                [eu, F] = sp_eval (u, hspace, geometry, npts);
-                figure(1000 + itime); surf (squeeze(F(1,:,:)), squeeze(F(2,:,:)), squeeze(F(3,:,:)), eu)
             end
         end
     end

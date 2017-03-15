@@ -132,7 +132,6 @@ function [hspace, u_coarse] = update_active_functions (hspace, hmsh, funs_to_rea
 active = hspace.active;
 deactivated = hspace.deactivated;
 active_funs_support = cell(1, hspace.nlevels);                      % cell array with the active cells supporting reactivated functions
-active_cells = cell(1, hspace.nlevels);                             % cell array with the active cells of the elevel
 Bzr_ext_container = cell(hmsh.ndim, hspace.nlevels);                % n-dimensional cell array to cache Bézier extraction matrices of each level
 
 % initialize the cell array to store the coarsened dofs u_coarse
@@ -159,15 +158,10 @@ for lev = hspace.nlevels-1:-1:1
         active{lev} = union (active{lev}, funs_to_reactivate{lev});
         
         deactivated{lev} = setdiff (deactivated{lev}, funs_to_reactivate{lev});
-        % get active cells
-        [active_cell_support, ~] = sp_get_cells (hspace.space_of_level(lev), hmsh.mesh_of_level(lev), active{lev});
-        children_of_level = hmsh_get_children(hmsh, lev, active_cell_support);
-        active_children_of_level = intersect(children_of_level, active_cells{lev+1}); 
-        deactivated_cells = hmsh_get_parent(hmsh, lev+1, active_children_of_level);
-        active_cells{lev} = setdiff(active_cell_support, deactivated_cells);
+
         % active cells in projection
-        active_reactivated_funs_support = intersect(active_cells{lev}, reactivated_funs_support);         % active cells of the support of reactivated functions
-        active_funs_support{lev} = union(reactivated_cell{lev}, active_reactivated_funs_support);         % cells active in projection
+        active_reactivated_funs_support = intersect(hmsh.active{lev}, reactivated_funs_support);         % active cells of the support of reactivated functions
+        active_funs_support{lev} = union(reactivated_cell{lev}, active_reactivated_funs_support);        % cells active in projection
 
     end
 end
