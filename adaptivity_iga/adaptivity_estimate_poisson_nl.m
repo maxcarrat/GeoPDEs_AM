@@ -87,7 +87,7 @@ if (isfield (problem_data, 'grad_c_diff'))
     aux = reshape (sum (val_grad_c_diff .* dernum, 1), size(valf));
 end
 aux = (valf - val_c_cap .* diff_time + val_c_diff.*der2num + aux).^2; % size(aux) = [hmsh.nqn, hmsh.nel], interior residual at quadrature nodes
-normalized_aux = aux / max(max(aux));
+normalized_aux = aux / max(max(valf));
 switch adaptivity_data.flag
     case 'elements'
         w = [];

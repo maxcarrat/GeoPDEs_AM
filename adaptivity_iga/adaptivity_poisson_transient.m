@@ -150,12 +150,12 @@ for itime = 1:number_ts-1
             disp('ERROR: The partition-of-the-unity property does not hold.')
             solution_data.flag = -1; break
         end
- 
-%         if (hmsh.nlevels > adaptivity_data.max_level && iter > 2)
-%             if (plot_data.print_info); disp('Warning: reached the maximum number of levels'); end;
-%             hspace.dofs = u;
-%             break;
-%         end
+        
+        if (hmsh.nlevels > adaptivity_data.max_level && iter > 2)
+            if (plot_data.print_info); disp('Warning: reached the maximum number of levels'); end;
+            hspace.dofs = u;
+            break;
+        end
         
         %% SOLVE ==================================================================
         if (plot_data.print_info)
@@ -173,19 +173,19 @@ for itime = 1:number_ts-1
         
         
         %% ESTIMATE ===============================================================
-        if (plot_data.print_info); fprintf('\n ESTIMATE: \n'); end
-        est = adaptivity_estimate_poisson_nl(u, u_last, itime, hmsh, hspace, problem_data, adaptivity_data);
-        %         est = adaptivity_estimate_gradient(u, itime, hmsh, hspace, problem_data, adaptivity_data);
-        gest(iter) = norm (est);
-        if (plot_data.print_info); fprintf('Computed error estimator: %f \n', gest(iter)); end
-        if (isfield (problem_data, 'graduex'))
-            [err_h1(iter), err_l2(iter), err_h1s(iter)] = sp_h1_error (hspace, hmsh, u(:,itime+1), problem_data.uex, problem_data.graduex);
-            if (plot_data.print_info); fprintf('Error in H1 seminorm = %g\n', err_h1s(iter)); end
-        end
+        %         if (plot_data.print_info); fprintf('\n ESTIMATE: \n'); end
+        %         est = adaptivity_estimate_poisson_nl(u, u_last, itime, hmsh, hspace, problem_data, adaptivity_data);
+        %         %         est = adaptivity_estimate_gradient(u, itime, hmsh, hspace, problem_data, adaptivity_data);
+        %         gest(iter) = norm (est);
+        %         if (plot_data.print_info); fprintf('Computed error estimator: %f \n', gest(iter)); end
+        %         if (isfield (problem_data, 'graduex'))
+        %             [err_h1(iter), err_l2(iter), err_h1s(iter)] = sp_h1_error (hspace, hmsh, u(:,itime+1), problem_data.uex, problem_data.graduex);
+        %             if (plot_data.print_info); fprintf('Error in H1 seminorm = %g\n', err_h1s(iter)); end
+        %         end
         
         
         % STOPPING CRITERIA -------------------------------------------------------
-        if (gest(iter) < adaptivity_data.tol)
+        if (gest(iter) < adaptivity_data.tol && ~(iter < 2 && itime < 2))
             if (plot_data.print_info); disp('Success: The solution converge!!!'); end;
             hspace.dofs = u;
             break;
@@ -202,43 +202,45 @@ for itime = 1:number_ts-1
             hspace.dofs = u;
             break;
         end
+        
         %% REFINEMENT =============================================================
         % MARK REFINEMENT
         if (plot_data.print_info); disp('MARK REFINEMENT:'); end
-        [marked_ref_err, ~] = adaptivity_mark (est, hmsh, hspace, adaptivity_data);
+        marked_ref_err = cell(hmsh.nlevels, 1);% adaptivity_mark(est, hmsh, hspace, adaptivity_data);
         [marked_ref_geo, ~] = refine_toward_source (hmsh, hspace, itime, adaptivity_data, problem_data);
         marked_ref = cellfun(@(marked_err,marked_geo) union(marked_err,marked_geo), marked_ref_err,marked_ref_geo,'UniformOutput',false);
         num_marked_ref = sum(cellfun(@numel, marked_ref));
-
+        
         % REFINE
-        if (plot_data.print_info)
-            fprintf('%d %s marked for refinement \n', num_marked_ref, adaptivity_data.flag);
-            disp('REFINE')
+        if num_marked_ref~=0
+            if (plot_data.print_info)
+                fprintf('%d %s marked for refinement \n', num_marked_ref, adaptivity_data.flag);
+                disp('REFINE')
+            end
+            [hmsh, hspace, Cref] = adaptivity_refine (hmsh, hspace, marked_ref, adaptivity_data);
+            
+            % Project the previous solution mesh onto the next refined mesh
+            if (plot_data.print_info); fprintf('\n Project old solution onto refined mesh \n'); end
+            
+            % project dof onto new mesh
+            hspace.dofs = Cref * u;
+            u = hspace.dofs;
+            % project last time step solution onto new mesh
+            u_last = Cref * u_last;
+            % project error estimation onto new mesh
+            if strcmp(adaptivity_data.flag, 'functions')
+                est = Cref * est;
+            end;
         end
-        [hmsh, hspace, Cref] = adaptivity_refine (hmsh, hspace, marked_ref, adaptivity_data);
-        
-        % Project the previous solution mesh onto the next refined mesh
-        if (plot_data.print_info); fprintf('\n Project old solution onto refined mesh \n'); end
-        
-        % project dof onto new mesh
-        hspace.dofs = Cref * u;
-        u = hspace.dofs;
-        % project last time step solution onto new mesh
-        u_last = Cref * u_last;
-        % project error estimation onto new mesh
-        if strcmp(adaptivity_data.flag, 'functions')
-            est = Cref * est;
-        end;
-        
         %% COARSENING =============================================================
         % MARK COARSENING
         if (plot_data.print_info); disp('MARK COARSENING:'); end
-        [marked_coarse, num_marked_coarse] = marking_for_coarsening (est, hmsh, hspace, adaptivity_data);
-%           [marked_coarse, num_marked_coarse] = coarse_toward_source (hmsh, hspace, itime, adaptivity_data, problem_data);
-
-          % coarse only after the first time step if it also refines
-        if (itime > 1 && ~isempty(marked_coarse))
-            % COARSE
+        %         [marked_coarse, num_marked_coarse] = marking_for_coarsening (est, hmsh, hspace, adaptivity_data);
+        [marked_coarse, num_marked_coarse] = coarse_toward_source (hmsh, hspace, itime, adaptivity_data, problem_data);
+        
+        % coarse only after the first time step if it also refines
+        % COARSE
+        if (itime > 1 && num_marked_coarse~=0)
             if (plot_data.print_info)
                 fprintf('%d %s marked for coarsening \n', num_marked_coarse, adaptivity_data.flag);
                 disp('COARSE')
@@ -268,6 +270,7 @@ for itime = 1:number_ts-1
             %                 est = Ccoarse * est;
             %             end;
         end
+        
         
         %% ========================================================================
         
@@ -328,8 +331,13 @@ for itime = 1:number_ts-1
         % EXPORT VTK FILE
         if (plot_data.print_info); fprintf('\n VTK Post-Process'); end
         npts = [plot_data.npoints_x plot_data.npoints_y plot_data.npoints_z];
+        if hmsh.ndim == 2
+            npts = [plot_data.npoints_x plot_data.npoints_y];
+        end
         output_file = sprintf(plot_data.file_name, itime);
-        sp_to_vtk (hspace.dofs, hspace, geometry, npts(1:hmsh.rdim), output_file, {'solution', 'gradient'}, {'value', 'gradient'})
+        [eu, F] = sp_eval (u, hspace, geometry, npts);
+        %         sp_to_vtk (hspace.dofs, hspace, geometry, npts(1:hmsh.rdim), output_file, {'solution', 'gradient'}, {'value', 'gradient'})
+        msh_to_vtk (F, eu, output_file, 'value')
         if strcmp(adaptivity_data.flag, 'functions')
             output_file_est = sprintf(plot_data.file_name_err, itime);
             sp_to_vtk (est, hspace, geometry, npts(1:hmsh.rdim), output_file_est, {'error'})
@@ -338,7 +346,7 @@ for itime = 1:number_ts-1
         % Plot Mesh
         if (plot_data.plot_hmesh)
             fig_mesh = hmsh_plot_cells (hmsh, 20, (fig_mesh) );
-            saveas((fig_mesh), sprintf(plot_data.file_name_mesh, itime),'m'); 
+            saveas((fig_mesh), sprintf(plot_data.file_name_mesh, itime),'m');
         end
         
         % Plot in Octave/Matlab

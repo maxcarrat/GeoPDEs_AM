@@ -81,9 +81,11 @@ switch (lower (adaptivity_data.flag))
     case 'elements'
         aux = cumsum ([0, hmsh.nel_per_level]);
         for lev = 1:hmsh.nlevels
-            elems = aux(lev)+1:aux(lev+1);
-            [~,ind,~] = intersect (elems, marked_list);
-            marked{lev} = hmsh.active{lev}(ind);
+            if lev < adaptivity_data.max_level
+                elems = aux(lev)+1:aux(lev+1);
+                [~,ind,~] = intersect (elems, marked_list);
+                marked{lev} = hmsh.active{lev}(ind);
+            end
         end
     case 'functions'
         aux = cumsum ([0, hspace.ndof_per_level]);
