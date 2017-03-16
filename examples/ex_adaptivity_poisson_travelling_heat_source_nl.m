@@ -65,7 +65,6 @@ method_data.truncated   = 1;            % 0: False, 1: True
 % ADAPTIVITY PARAMETERS
 clear adaptivity_data
 adaptivity_data.flag = 'elements';
-% adaptivity_data.flag = 'functions';
 adaptivity_data.C0_est = 1.0;
 adaptivity_data.mark_param = 0.5;
 adaptivity_data.mark_param_coarsening = 0.25;

@@ -1,5 +1,5 @@
 function k_der = conductivity_der(eu)
-%CONDUCTIVITY_DER evaluate the temeprature dependent
+%CONDUCTIVITY_DER evaluate the temprature dependent
 %conductivity derivative of the material
 
 k_der = cat (1, ...
@@ -10,9 +10,9 @@ for k =1:2
     for i=1:size(eu,1)
         for j=1:size(eu,2)
             if eu(i,j) > 800
-                k_der(k,i,j) =  34.0;
+                k_der(k,i,j) =  34.0/800;
             else
-                k_der(k,i,j) =  26.7;
+                k_der(k,i,j) =  -26.7/800;
             end
         end
     end
