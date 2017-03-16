@@ -8,7 +8,7 @@ vertex = problem_data.path(time_step,:);
 % MARK ELEMENT OF THE FINER LEVEL CUTTED OR INCLUDED BY THE SOURCE REGION
 el_dir = zeros(3, 1);
 marked_element_index = cell(1, hmsh.nlevels);
-for lev=hmsh.nlevels:hmsh.nlevels
+for lev=1:hmsh.nlevels
     % get local points coordinates
     local_vertex_left = mapGlobalToLocal(vertex - adaptivity_data.radius * adaptivity_data.crp, msh_finer_lev);
     local_vertex_right = mapGlobalToLocal(vertex + adaptivity_data.radius * adaptivity_data.crp, msh_finer_lev);
@@ -29,13 +29,13 @@ for lev=hmsh.nlevels:hmsh.nlevels
                     local_vertex_right(idir) >= knots_dir(el_dir(idir)+degree_dir)) ||...
                     (local_vertex_left(idir) < knots_dir(el_dir(idir)+degree_dir+1) &&... the knotspan is cutted by the source
                     local_vertex_right(idir) >= knots_dir(el_dir(idir)+degree_dir+1)))
-                isMarked = 0;
-            else
                 isMarked = 1;
+            else
+                isMarked = 0;
                 break;
             end
         end % END DIRECTION LOOP
-        if isMarked
+        if ~isMarked
             marked_element_index{lev} = [marked_element_index{lev} hmsh.active{lev}(el)];
         end
     end % END ELEMENTS LOOP

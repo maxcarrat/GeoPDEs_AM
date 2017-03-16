@@ -150,20 +150,18 @@ for lev = hspace.nlevels-1:-1:1
     
     u_coarse{lev} = hspace.Csub{lev}(:,ndof_until_lev+1:ndof_above_lev)*hspace.dofs(ndof_until_lev+1:ndof_above_lev);
     
-    if  ~isempty (reactivated_cell{lev})
-        [reactivated_funs_support, ~] = sp_get_cells (hspace.space_of_level(lev), hmsh.mesh_of_level(lev), funs_to_reactivate{lev});
-        
-        funs2remove = sp_get_basis_functions (hspace.space_of_level(lev), hmsh.mesh_of_level(lev), removed_cells{lev});
-        active{lev} = setdiff(active{lev}, funs2remove);
-        active{lev} = union (active{lev}, funs_to_reactivate{lev});
-        
-        deactivated{lev} = setdiff (deactivated{lev}, funs_to_reactivate{lev});
-
-        % active cells in projection
-        active_reactivated_funs_support = intersect(hmsh.active{lev}, reactivated_funs_support);         % active cells of the support of reactivated functions
-        active_funs_support{lev} = union(reactivated_cell{lev}, active_reactivated_funs_support);        % cells active in projection
-
-    end
+    [reactivated_funs_support, ~] = sp_get_cells (hspace.space_of_level(lev), hmsh.mesh_of_level(lev), funs_to_reactivate{lev});
+    
+    funs2remove = sp_get_basis_functions (hspace.space_of_level(lev), hmsh.mesh_of_level(lev), removed_cells{lev});
+    active{lev} = setdiff(active{lev}, funs2remove);
+    active{lev} = union (active{lev}, funs_to_reactivate{lev});
+    
+    deactivated{lev} = setdiff (deactivated{lev}, funs_to_reactivate{lev});
+    
+    % active cells in projection
+    active_reactivated_funs_support = intersect(hmsh.active{lev}, reactivated_funs_support);         % active cells of the support of reactivated functions
+    active_funs_support{lev} = union(reactivated_cell{lev}, active_reactivated_funs_support);        % cells active in projection
+    
 end
 
 if (~hspace.truncated)
@@ -199,7 +197,7 @@ if (nargout == 2)
             % express lower levels funs as linear combination of funs of
             % level lev
             active_dofs_lc = hspace.Csub{lev+1}(:,1:ndof_above_lev)*hspace.dofs(1:ndof_above_lev);
-            % get cells to be activated in projection        
+            % get cells to be activated in projection
             cells_activated_in_proj = active_funs_support{lev};
             % initialize temporary coarse dofs vector
             u_coarse_temp = cell(1, max(cells_activated_in_proj));
@@ -212,7 +210,7 @@ if (nargout == 2)
                 children_cells = hmsh_get_children(hmsh, lev, cells_activated_in_proj(el));
                 % get indeces of functions to be activated in projection
                 funs_projected = sp_get_basis_functions (hspace.space_of_level(lev), hmsh.mesh_of_level(lev), cells_activated_in_proj(el));
-                % initialize u_coarse_temp of the element el                
+                % initialize u_coarse_temp of the element el
                 u_coarse_temp{cells_activated_in_proj(el)} = zeros(hspace.space_of_level(lev).ndof, 1);
                 % functions with support on children cells to be
                 % projected

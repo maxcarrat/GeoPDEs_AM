@@ -157,20 +157,27 @@ for itime = 1:number_ts-1
             break;
         end
         
+        % Initialization of some auxiliary variables
+        if (~(isempty(find(plot_data.time_steps_to_post_process==itime, 1))) && plot_data.adaptivity)
+            if (plot_data.plot_hmesh)
+                fig_mesh = figure(1+adaptivity_data.num_max_iter*itime+iter);
+            end
+        end
+        
         %% SOLVE ==================================================================
         if (plot_data.print_info)
             disp('SOLVE:')
             fprintf('Number of elements: %d. Total DOFs: %d \n', hmsh.nel, hspace.ndof);
         end
         
-        if ~(problem_data.flag_nl == 1)
+        if ~problem_data.flag_nl
             u = adaptivity_solve_poisson_transient (hmsh, hspace, itime, problem_data);
         else
             [u, problem_data] = adaptivity_solve_poisson_transient_nl (hmsh, hspace, itime, problem_data, plot_data);
         end
         
+        hspace.dofs = u;
         nel(iter) = hmsh.nel; ndof(iter) = hspace.ndof;
-        
         
         %% ESTIMATE ===============================================================
         %         if (plot_data.print_info); fprintf('\n ESTIMATE: \n'); end
@@ -264,14 +271,9 @@ for itime = 1:number_ts-1
             hmsh = hmsh_coarse;
             hspace = hspace_coarse;
             hspace.dofs = u;
-            
-            %             % project error estimation onto new mesh
-            %             if strcmp(adaptivity_data.flag, 'functions')
-            %                 est = Ccoarse * est;
-            %             end;
+
         end
-        
-        
+           
         %% ========================================================================
         
         if (plot_data.adaptivity)
@@ -297,17 +299,17 @@ for itime = 1:number_ts-1
             % Plot in Octave/Matlab
             if (plot_data.plot_matlab)
                 if (plot_data.print_info); fprintf('\n Octave Post-Process'); end
-                [eu, F] = sp_eval (hspace.dofs, hspace, geometry, npts);
-                if numel(hmsh.rdim) == 1
+                if hmsh.rdim == 1
+                    npts = [plot_data.npoints_x];
+                    [eu, F] = sp_eval (hspace.dofs, hspace, geometry, npts);
                     figure(1000 + 0); plot (squeeze(F(1,:,:)), eu)
-                elseif numel(hmsh.rdim) == 2
+                elseif hmsh.rdim == 2
+                    npts = [plot_data.npoints_x plot_data.npoints_y];
+                    [eu, F] = sp_eval (hspace.dofs, hspace, geometry, npts);
                     figure(1000 + 0); surf (squeeze(F(1,:,:)), squeeze(F(2,:,:)), eu)
-                else
-                    figure(1000 + 0); surf (squeeze(F(1,:,:)), squeeze(F(2,:,:)), squeeze(F(3,:,:)), eu)
                 end
             end
         end
-        
     end % END ADAPTIVITY LOOP
     
     %update last time step solution
@@ -362,6 +364,10 @@ for itime = 1:number_ts-1
                 figure(1000 + itime); surf (squeeze(F(1,:,:)), squeeze(F(2,:,:)), eu)
             end
         end
+    end
+    if ~problem_data.non_linear_convergence_flag
+        disp('ERROR: No Convergence !!!');
+        break;
     end
 end % END BACKWARD EULER LOOP
 

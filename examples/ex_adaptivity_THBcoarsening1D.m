@@ -157,6 +157,14 @@ figure(5); plot (squeeze(F(1,:,:)), eu)
 marked_coarse{1} = [];
 marked_coarse{2} = [];
 marked_coarse{3} = [5 6];
+marked_coarse{4} = [];
+[hmsh, hspace, u] = adaptivity_coarsen(hmsh, hspace, marked_coarse, adaptivity_data);
+hmsh_plot_cells (hmsh, 20, (figure(3)));
+hspace.dofs = u;
+
+marked_coarse{1} = [];
+marked_coarse{2} = [];
+marked_coarse{3} = [];
 marked_coarse{4} = [15 16 17 18];
 [hmsh, hspace, u] = adaptivity_coarsen(hmsh, hspace, marked_coarse, adaptivity_data);
 hmsh_plot_cells (hmsh, 20, (figure(3)));

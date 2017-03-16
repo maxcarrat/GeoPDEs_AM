@@ -6,8 +6,8 @@ C = zeros(size(eu));
 
 for i=1:size(eu,1)
     for j=1:size(eu,2)
-        capacity_pc = 7500 * 600 + ...
-            7500 * 261e+03 * func_pc_der(eu(i,j), eu_old(i,j)) * (tanh( (eu(i,j) - 800) / 800) + 1);
+        capacity_pc = 7820 * 600 + ...
+            7820 * 261e+03 * func_pc_der(eu(i,j), eu_old(i,j)) * (tanh( (eu(i,j) - 800) / 800) + 1);
         
         C(i,j) =  capacity_pc;
     end
