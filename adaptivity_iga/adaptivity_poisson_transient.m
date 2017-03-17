@@ -206,6 +206,7 @@ for itime = 1:number_ts-1
             break;
         elseif (iter >= adaptivity_data.num_max_iter)
             if (plot_data.print_info); disp('Warning: reached the maximum number of iterations'); end;
+            fprintf('non-convergence flag: %d \n', problem_data.non_linear_convergence_flag);
             hspace.dofs = u;
             break;
         end
@@ -331,7 +332,7 @@ for itime = 1:number_ts-1
             fprintf('\n%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% Post-Process time step = %d %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%\n', itime);
         end
         % EXPORT VTK FILE
-        if (plot_data.print_info); fprintf('\n VTK Post-Process'); end
+        if (plot_data.print_info); fprintf('\n VTK Post-Process \n'); end
         npts = [plot_data.npoints_x plot_data.npoints_y plot_data.npoints_z];
         if hmsh.ndim == 2
             npts = [plot_data.npoints_x plot_data.npoints_y];
@@ -367,7 +368,7 @@ for itime = 1:number_ts-1
     end
     if ~problem_data.non_linear_convergence_flag
         disp('ERROR: No Convergence !!!');
-        break;
+     break;
     end
 end % END BACKWARD EULER LOOP
 

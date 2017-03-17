@@ -50,11 +50,11 @@ problem_data.g = [];                        % Neumann Boundaries
 
 % CHOICE OF THE DISCRETIZATION PARAMETERS (Coarse mesh)
 clear method_data
-method_data.degree      = [3 3];        % Degree of the splines
-method_data.regularity  = [2 2];        % Regularity of the splines
+method_data.degree      = [2 2];        % Degree of the splines
+method_data.regularity  = [1 1];        % Regularity of the splines
 method_data.nsub_coarse = [1 1];       % Number of subdivisions of the coarsest mesh, with respect to the mesh in geometry
 method_data.nsub_refine = [2 2];        % Number of subdivisions for each refinement
-method_data.nquad       = [4 4];        % Points for the Gaussian quadrature rule
+method_data.nquad       = [3 3];        % Points for the Gaussian quadrature rule
 method_data.space_type  = 'standard';   % 'simplified' (only children functions) or 'standard' (full basis)
 method_data.truncated   = 1;            % 0: False, 1: True
 
@@ -66,7 +66,7 @@ adaptivity_data.mark_param = 0.5;
 adaptivity_data.mark_param_coarsening = 0.25;
 adaptivity_data.crp = 2.0;                     %coarsening relaxation parameter
 adaptivity_data.mark_strategy = 'MS';
-adaptivity_data.radius = [0.005s, 0.003];
+adaptivity_data.radius = [0.005, 0.003];
 adaptivity_data.max_level = 8;
 adaptivity_data.max_ndof = 15000;
 adaptivity_data.num_max_iter = 10;
@@ -74,7 +74,7 @@ adaptivity_data.max_nel = 15000;
 adaptivity_data.tol = 5.0e-01;
 
 % GRAPHICS
-plot_data.plot_hmesh = true;
+plot_data.plot_hmesh = false;
 plot_data.adaptivity = false;
 plot_data.plot_discrete_sol = false;
 plot_data.print_info = true;

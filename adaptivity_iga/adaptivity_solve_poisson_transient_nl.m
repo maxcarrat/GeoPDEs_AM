@@ -58,6 +58,7 @@ end
 
 u = u_0;
 res = 1.0;
+problem_data.non_linear_convergence_flag = 0;
 
 while (norm(res) > problem_data.Newton_tol)
     iter = iter + 1;
@@ -170,8 +171,8 @@ while (norm(res) > problem_data.Newton_tol)
     
     % STOPPING CRITERIA
     if (iter == problem_data.num_Newton_iter)
-        disp('Warning: Reached max number of iterations')
-        if (norm(res) <= problem_data.Newton_tol)
+        fprintf('\nWarning: Reached max number of iterations = %d \n',iter);
+        if (norm(res) < problem_data.Newton_tol)
             problem_data.non_linear_convergence_flag = 1;
         end
         break;
@@ -180,7 +181,7 @@ while (norm(res) > problem_data.Newton_tol)
 end % END NEWTON-RAPHSON ITERATION LOOP
 
 % UPDATE ADAPTIVITY NON-LINEAR FLAG
-if (norm(res) <= problem_data.Newton_tol)
+if (norm(res) < problem_data.Newton_tol)
     problem_data.non_linear_convergence_flag = 1;
 end
 
