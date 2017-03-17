@@ -1,52 +1,8 @@
-%% EX_ADAPTIVITY_THBCOARSENING_BIS
+%% EX_ADAPTIVITY_THBCOARSENING2D
 % Test for THB-spline coarsening algorithm:
 % A 3 level truncated hierarchical 2D mesh is considered, one levl coarsening
 % is performed between the second and the first level and between the third
 % and the second level. The method works ONLY if THB-splines are used.
-%
-%
-%                          Initial Mesh
-%                * * * * * * * * * * * * * * * *  * 
-%                *       *       *        *       *
-%                *       *       *        *       *
-%                *       *       *        *       *
-%                * * * * * * * * * * * * * * * *  * 
-%                *       *       *        *       *
-%                *       *       *        *       *
-%                *       *       *        *       *
-%                * * * * * * * * * * * * * * * *  * 
-%                *               *                *
-%                *               *                *
-%                *               *                *
-%                *               *                *
-%                *               *                *
-%                *               *                *
-%                *               *                *
-%                * * * * * * * * * * * * * * * *  * 
-%
-%                         Refined Mesh
-%
-%                * * * * * * * * * * * * * * * * *
-%                *   *   *   *   *   *   *   *   *
-%                * * * * * * * * * * * * * * * * *
-%                *   *   *   *   *   *   *   *   *
-%                * * * * * * * * * * * * * * * * *
-%                *   *   *   *   *   *   *   *   *
-%                * * * * * * * * * * * * * * * * *
-%                *   *   *   *   *   *   *   *   *
-%                * * * * * * * * * * * * * * * * *
-%                *       *       *               *
-%                *       *       *               *
-%                *       *       *               *
-%                * * * * * * * * *               *
-%                *       *       *               *
-%                *       *       *               *
-%                *       *       *               *
-%                * * * * * * * * * * * * * * * * *
-%
-% Coarsening the mesh back to the initial configuration has to return the
-% initial values
-%
 %
 % Copyright (C) 2017 Massimo Carraturo
 %
@@ -138,7 +94,6 @@ v2 = [1.0 1.1 1.1 1.1 1.3 1.4]';
 v3 = [1.75 1.4 0.8 1.5 1.75 1.6]';
 v4 = v3*1.5;
 
-
 hspace.dofs = cat(1, v1, v2, v3, v4, v2, [1.4, 2]');
 initial_values = hspace.dofs;
 
@@ -152,7 +107,7 @@ marked_ref{1} = [];
 marked_ref{2} = [6 7 10 11];
 marked_ref{3} = [];
 [hmsh, hspace, Cref] = adaptivity_refine (hmsh, hspace, marked_ref, adaptivity_data);
-hmsh_plot_cells (hmsh, 20, (figure(2)));
+hmsh_plot_cells (hmsh, 20, (figure(3)));
 u_ref = Cref*initial_values;
 
 % plot refined state
@@ -178,54 +133,18 @@ figure(6); surf (squeeze(F(1,:,:)), squeeze(F(2,:,:)), eu)
 marked_coarse{1} = [];
 marked_coarse{2} = [];
 marked_coarse{3} = [];
-% ,[116 117 118 119],[144 145 146 147],[148 149 150 151]
-marked_coarse{4} = cat(2,[103 104 119 120]);
-[hmsh, hspace, u] = adaptivity_coarsen(hmsh, hspace, marked_coarse, adaptivity_data);
-hmsh_plot_cells (hmsh, 20, (figure(4)));
-
-% plot coarse state
-npts = [plot_data.npoints_x plot_data.npoints_y];
-[eu, F] = sp_eval (u, hspace, geometry, npts);
-figure(7); surf (squeeze(F(1,:,:)), squeeze(F(2,:,:)), eu)
-
-%% Coarsening back to the initial state
-marked_coarse{1} = [];
-marked_coarse{2} = [];
-marked_coarse{3} = [19 20 27 28];
-marked_coarse{4} = [];
-hspace.dofs = u;
-[hmsh, hspace, u] = adaptivity_coarsen(hmsh, hspace, marked_coarse, adaptivity_data);
-hmsh_plot_cells (hmsh, 20, (figure(77)));
-
-% plot coarse state
-npts = [plot_data.npoints_x plot_data.npoints_y];
-[eu, F] = sp_eval (u, hspace, geometry, npts);
-figure(777); surf (squeeze(F(1,:,:)), squeeze(F(2,:,:)), eu)
-
-%% Coarsening back to the initial state
-marked_coarse{1} = [];
-marked_coarse{2} = [];
-marked_coarse{3} = [];
-% ,[116 117 118 119],[144 145 146 147],[148 149 150 151]
-marked_coarse{4} = cat(2,[103+32 104+32 119+32 120+32],...
+marked_coarse{4} = cat(2,[103 104 119 120],[103+32 104+32 119+32 120+32],...
     [103+2 104+2 119+2 120+2], [103+34 104+34 119+34 120+34]);
-hspace.dofs = u;
 [hmsh, hspace, u] = adaptivity_coarsen(hmsh, hspace, marked_coarse, adaptivity_data);
+hspace.dofs=u;
 hmsh_plot_cells (hmsh, 20, (figure(44)));
 
-% plot coarse state
-npts = [plot_data.npoints_x plot_data.npoints_y];
-[eu, F] = sp_eval (u, hspace, geometry, npts);
-figure(444); surf (squeeze(F(1,:,:)), squeeze(F(2,:,:)), eu)
-
-%% Coarsening back to the initial state
 marked_coarse{1} = [];
 marked_coarse{2} = [];
-marked_coarse{3} = [19+16 20+16 27+16 28+16];
+marked_coarse{3} = [19 20 27 28 19+16 20+16 27+16 28+16];
 marked_coarse{4} = [];
-hspace.dofs = u;
 [hmsh, hspace, u] = adaptivity_coarsen(hmsh, hspace, marked_coarse, adaptivity_data);
-hmsh_plot_cells (hmsh, 20, (figure(99)));
+hmsh_plot_cells (hmsh, 20, (figure(44)));
 
 % plot coarse state
 npts = [plot_data.npoints_x plot_data.npoints_y];

@@ -1,4 +1,5 @@
 % PHYSICAL DATA OF THE PROBLEM
+close all
 clear problem_data
 clc
 
@@ -10,7 +11,7 @@ mkdir(problem_output.folder);
 
 % Set non-linear flag
 % if true the non-linear solver is used
-problem_data.flag_nl = false;
+problem_data.flag_nl = true;
 
 % Set lumped matrix
 problem_data.lumped = true;
@@ -33,6 +34,10 @@ problem_data.grad_c_diff =    @(x,y,z) cat (1, ...
                                                             %@conductivity_der_3D; 
 problem_data.c_cap =   @(x,y,z) ones(size(x))*7820*600;     % @capacity; %
 problem_data.initial_temperature = 20;                      %[°C]
+problem_data.c_diff  =  @conductivity; %@(x,y,z) ones(size(x))*29; %
+problem_data.grad_c_diff =   @conductivity_der_3D;% @(x,y,z) cat (1, reshape (zeros(size(x)), [1, size(x)]), reshape (zeros(size(x)), [1, size(x)]), reshape (zeros(size(x)), [1, size(x)]));%
+problem_data.c_cap =   @capacity; %@(x,y,z) ones(size(x))*7820*600; % 
+problem_data.initial_temperature = 20;      %[°C]
 
 % Time discretization
 n_time_steps = 20;

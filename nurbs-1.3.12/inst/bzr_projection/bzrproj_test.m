@@ -103,7 +103,7 @@ new_control_points(2,:) = 1/2 * new_control_point_e1(2,:) + 1/2 * new_control_po
 new_control_points(3,:) = 1/3 * new_control_point_e1(3,:) + 1/3 * new_control_point_e2(2,:) + 1/3 * new_control_point_e3(1,:);
 new_control_points(4,:) = 1/3 * new_control_point_e2(3,:) + 1/3 * new_control_point_e3(2,:) + 1/3 * new_control_point_e4(1,:);
 new_control_points(5,:) = 1/3 * new_control_point_e3(3,:) + 1/3 * new_control_point_e4(2,:) + 1/3 * new_control_point_e5(1,:);
-new_control_points(6,:) = 1/2 * new_control_point_e4(2,:) + 1/2 * new_control_point_e5(2,:);
+new_control_points(6,:) = 1/2 * new_control_point_e4(3,:) + 1/2 * new_control_point_e5(2,:);
 new_control_points(7,:) = new_control_point_e5(3,:);
 
 

@@ -1,5 +1,5 @@
 function [ B ] = brnstpoly_coeff( u, p, i )
-%BRNSTPOLY:  Bersnstein polynomial
+%BRNSTPOLY_COEFF:  Bersnstein polynomial coefficients
 %
 % Calling Sequence:
 %

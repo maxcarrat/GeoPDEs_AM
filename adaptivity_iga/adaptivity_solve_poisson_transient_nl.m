@@ -171,6 +171,9 @@ while (norm(res) > problem_data.Newton_tol)
     % STOPPING CRITERIA
     if (iter == problem_data.num_Newton_iter)
         disp('Warning: Reached max number of iterations')
+        if (norm(res) <= problem_data.Newton_tol)
+            problem_data.non_linear_convergence_flag = 1;
+        end
         break;
     end
     

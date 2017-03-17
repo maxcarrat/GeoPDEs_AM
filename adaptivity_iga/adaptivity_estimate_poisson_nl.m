@@ -36,13 +36,13 @@
 %           where h_b is the local meshsize, a_b is the coefficient of b for the partition-of-unity, and U is the Galerkin solution
 %
 %
-% Copyright (C) 2015, 2016 Eduardo M. Garau, Rafael Vazquez
+% Copyright (C) 2017 Massimo Carraturo
 %
 %    This program is free software: you can redistribute it and/or modify
 %    it under the terms of the GNU General Public License as published by
 %    the Free Software Foundation, either version 3 of the License, or
 %    (at your option) any later version.
-
+%
 %    This program is distributed in the hope that it will be useful,
 %    but WITHOUT ANY WARRANTY; without even the implied warranty of
 %    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
@@ -86,7 +86,8 @@ if (isfield (problem_data, 'grad_c_diff'))
     val_grad_c_diff  = feval (problem_data.grad_c_diff, num);
     aux = reshape (sum (val_grad_c_diff .* dernum, 1), size(valf));
 end
-aux = (valf - val_c_cap .* diff_time + val_c_diff.*der2num + aux).^2; % size(aux) = [hmsh.nqn, hmsh.nel], interior residual at quadrature nodes
+aux = (valf - val_c_cap .* diff_time + val_c_diff .* der2num + aux).^2; % size(aux) = [hmsh.nqn, hmsh.nel], interior residual at quadrature nodes
+% normalize the aux value
 normalized_aux = aux / max(max(valf));
 switch adaptivity_data.flag
     case 'elements'
