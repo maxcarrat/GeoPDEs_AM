@@ -240,39 +240,41 @@ for itime = 1:number_ts-1
                 est = Cref * est;
             end;
         end
-        %% COARSENING =============================================================
-        % MARK COARSENING
-        if (plot_data.print_info); disp('MARK COARSENING:'); end
-        %         [marked_coarse, num_marked_coarse] = marking_for_coarsening (est, hmsh, hspace, adaptivity_data);
-        [marked_coarse, num_marked_coarse] = coarse_toward_source (hmsh, hspace, itime, adaptivity_data, problem_data);
         
-        % coarse only after the first time step if it also refines
-        % COARSE
-        if (itime > 1 && num_marked_coarse~=0)
-            if (plot_data.print_info)
-                fprintf('%d %s marked for coarsening \n', num_marked_coarse, adaptivity_data.flag);
-                disp('COARSE')
+        %% COARSENING =============================================================
+        if adaptivity_data.doCoarsening
+            % MARK COARSENING
+            if (plot_data.print_info); disp('MARK COARSENING:'); end
+            %         [marked_coarse, num_marked_coarse] = marking_for_coarsening (est, hmsh, hspace, adaptivity_data);
+            [marked_coarse, num_marked_coarse] = coarse_toward_source (hmsh, hspace, itime, adaptivity_data, problem_data);
+            
+            % coarse only after the first time step if it also refines
+            % COARSE
+            if (itime > 1 && num_marked_coarse~=0)
+                if (plot_data.print_info)
+                    fprintf('%d %s marked for coarsening \n', num_marked_coarse, adaptivity_data.flag);
+                    disp('COARSE')
+                end
+                % Project the previous solution mesh onto the next refined mesh
+                if (plot_data.print_info); fprintf('\n Project old solution onto coarsed mesh \n'); end
+                % project dofs onto new mesh
+                hspace.dofs = u;
+                [hmsh_coarse, hspace_coarse, u] = adaptivity_coarsen (hmsh, hspace, marked_coarse, adaptivity_data);
+                
+                if (plot_data.print_info); fprintf('\n Project last convergent time step \n'); end
+                % project last time step solution onto new mesh
+                hspace.dofs = u_last;
+                [~, ~, u_last] = adaptivity_coarsen (hmsh, hspace, marked_coarse, adaptivity_data);
+                
+                %             if (plot_data.print_info); fprintf('\n Project estimated error \n'); end
+                %             % project error onto new mesh
+                %             hspace.dofs = est;
+                %             [~, ~, est] = adaptivity_coarsen (hmsh, hspace, marked_coarse, adaptivity_data);
+                
+                hmsh = hmsh_coarse;
+                hspace = hspace_coarse;
+                hspace.dofs = u;
             end
-            % Project the previous solution mesh onto the next refined mesh
-            if (plot_data.print_info); fprintf('\n Project old solution onto coarsed mesh \n'); end
-            % project dofs onto new mesh
-            hspace.dofs = u;
-            [hmsh_coarse, hspace_coarse, u] = adaptivity_coarsen (hmsh, hspace, marked_coarse, adaptivity_data);
-            
-            if (plot_data.print_info); fprintf('\n Project last convergent time step \n'); end
-            % project last time step solution onto new mesh
-            hspace.dofs = u_last;
-            [~, ~, u_last] = adaptivity_coarsen (hmsh, hspace, marked_coarse, adaptivity_data);
-            
-            %             if (plot_data.print_info); fprintf('\n Project estimated error \n'); end
-            %             % project error onto new mesh
-            %             hspace.dofs = est;
-            %             [~, ~, est] = adaptivity_coarsen (hmsh, hspace, marked_coarse, adaptivity_data);
-            
-            hmsh = hmsh_coarse;
-            hspace = hspace_coarse;
-            hspace.dofs = u;
-
         end
            
         %% ========================================================================
@@ -366,7 +368,7 @@ for itime = 1:number_ts-1
             end
         end
     end
-    if ~problem_data.non_linear_convergence_flag
+    if ~problem_data.non_linear_convergence_flag && problem_data.flag_nl
         disp('ERROR: No Convergence !!!');
      break;
     end
