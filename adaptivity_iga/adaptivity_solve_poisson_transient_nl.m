@@ -45,16 +45,9 @@
 %    You should have received a copy of the GNU General Public License
 %    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-function [u, problem_data] = adaptivity_solve_poisson_transient_nl (hmsh, hspace, time_step, problem_data, plot_data)
+function [u, problem_data] = adaptivity_solve_poisson_transient_nl (hmsh, hspace, time_step, problem_data, plot_data, u_0)
 
 iter = 0;
-
-% Set initial solution as the last convergent solution
-if ~isempty(hspace.dofs)
-    u_0 = hspace.dofs;
-else
-    u_0 = zeros(hspace.ndof, 1);
-end
 
 u = u_0;
 res = 1.0;

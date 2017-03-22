@@ -45,7 +45,7 @@
 %    You should have received a copy of the GNU General Public License
 %    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-function u = adaptivity_solve_poisson_transient (hmsh, hspace, time_step, problem_data)
+function u = adaptivity_solve_poisson_transient (hmsh, hspace, time_step, problem_data, u_prev)
 
 stiff_mat = op_gradu_gradv_hier (hspace, hspace, hmsh, problem_data.c_diff);
 mass_mat = op_u_v_hier(hspace, hspace, hmsh, problem_data.c_cap);
@@ -99,12 +99,8 @@ if ~isempty(problem_data.h)
     u(int_dofs) =  lhs\ rhs(int_dofs);
 else
     delta_t = problem_data.time_discretization(time_step+1) - problem_data.time_discretization(time_step);
+    rhs = rhs * delta_t + mass_mat * u_prev;
     
-    if ~isempty(hspace.dofs)
-        rhs = rhs * delta_t + mass_mat * hspace.dofs;
-    else
-        rhs = rhs * delta_t;
-    end
     % Solve the linear system
     lhs = mass_mat + stiff_mat * delta_t;
     u =  lhs\ rhs;

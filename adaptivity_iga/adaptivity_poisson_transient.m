@@ -122,7 +122,6 @@ end
 number_ts = length(problem_data.time_discretization);
 u = ones(hspace.ndof, 1)*problem_data.initial_temperature;
 u_last = u;
-hspace.dofs = u;
 
 
 %% BACKWARD EULER =========================================================
@@ -170,13 +169,16 @@ for itime = 1:number_ts-1
             fprintf('Number of elements: %d. Total DOFs: %d \n', hmsh.nel, hspace.ndof);
         end
         
+        hspace.dofs = u;
         if ~problem_data.flag_nl
-            u = adaptivity_solve_poisson_transient (hmsh, hspace, itime, problem_data);
+            u = adaptivity_solve_poisson_transient (hmsh, hspace, itime, problem_data, u_last);
         else
-            [u, problem_data] = adaptivity_solve_poisson_transient_nl (hmsh, hspace, itime, problem_data, plot_data);
+            [u, problem_data] = adaptivity_solve_poisson_transient_nl (hmsh, hspace, itime, problem_data, plot_data, u_last);
         end
         
-        nel(iter) = hmsh.nel; ndof(iter) = hspace.ndof;
+        hspace.dofs = u;
+        nel(iter) = hmsh.nel;
+        ndof(iter) = hspace.ndof;
         
         % ESTIMATE ===============================================================
         if (plot_data.print_info); fprintf('\n ESTIMATE: \n'); end
@@ -226,11 +228,10 @@ for itime = 1:number_ts-1
             [hmsh, hspace, Cref] = adaptivity_refine (hmsh, hspace, marked_ref, adaptivity_data);
             
             % Project the previous solution mesh onto the next refined mesh
-            if (plot_data.print_info); fprintf('\n Project old solution onto refined mesh \n'); end
+            if (plot_data.print_info); fprintf('Project old solution onto refined mesh \n \n'); end
             
             % project dof onto new mesh
-            hspace.dofs = Cref * u;
-            u = hspace.dofs;
+            u = Cref * u;
             % project last time step solution onto new mesh
             u_last = Cref * u_last;
             % project error estimation onto new mesh
@@ -311,10 +312,13 @@ for itime = 1:number_ts-1
                 end
             end
         end
+
+
     end % END ADAPTIVITY LOOP
     
     %update last time step solution
     u_last = u;
+    
     
     solution_data.iter = iter;
     solution_data.gest = gest(1:iter);
