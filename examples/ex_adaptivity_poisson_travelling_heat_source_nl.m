@@ -14,9 +14,8 @@ problem_data.flag_nl = true;
 problem_data.lumped = true;
 
 % Non-linear analysis
-problem_data.Newton_tol = 1.0e-06;
-problem_data.num_Newton_iter = 10;
-problem_data.non_linear_convergence_flag = 0;
+problem_data.Newton_tol = 1.0e-05;
+problem_data.num_Newton_iter = 20;
 
 % Type of boundary conditions for each side of the domain
 problem_data.nmnn_sides   = [];
@@ -52,7 +51,7 @@ problem_data.g = [];                        % Neumann Boundaries
 clear method_data
 method_data.degree      = [2 2];        % Degree of the splines
 method_data.regularity  = [1 1];        % Regularity of the splines
-method_data.nsub_coarse = [1 1];       % Number of subdivisions of the coarsest mesh, with respect to the mesh in geometry
+method_data.nsub_coarse = [1 1];        % Number of subdivisions of the coarsest mesh, with respect to the mesh in geometry
 method_data.nsub_refine = [2 2];        % Number of subdivisions for each refinement
 method_data.nquad       = [3 3];        % Points for the Gaussian quadrature rule
 method_data.space_type  = 'standard';   % 'simplified' (only children functions) or 'standard' (full basis)
@@ -62,16 +61,17 @@ method_data.truncated   = 1;            % 0: False, 1: True
 clear adaptivity_data
 adaptivity_data.flag = 'elements';
 adaptivity_data.C0_est = 1.0;
-adaptivity_data.mark_param = 0.5;
-adaptivity_data.mark_param_coarsening = 0.25;
-adaptivity_data.crp = 2.0;                     %coarsening relaxation parameter
+adaptivity_data.mark_param = 0.75;
+adaptivity_data.mark_param_coarsening = 0.1;
+adaptivity_data.mark_neighbours = true;
+adaptivity_data.crp = 2.5;                     %coarsening relaxation parameter
 adaptivity_data.mark_strategy = 'MS';
-adaptivity_data.radius = [0.005, 0.003];
+adaptivity_data.radius = [0.003, 0.002];
 adaptivity_data.max_level = 8;
 adaptivity_data.max_ndof = 15000;
-adaptivity_data.num_max_iter = 10;
+adaptivity_data.num_max_iter = 5;
 adaptivity_data.max_nel = 15000;
-adaptivity_data.tol = 5.0e-01;
+adaptivity_data.tol = 2.0e-01;
 
 % GRAPHICS
 plot_data.plot_hmesh = false;
@@ -79,7 +79,7 @@ plot_data.adaptivity = false;
 plot_data.plot_discrete_sol = false;
 plot_data.print_info = true;
 plot_data.plot_matlab = false;
-plot_data.time_steps_to_post_process = linspace(1,n_time_steps,n_time_steps); %  [1, 10, 20, 30, 40, 50, 100, 150, 200, 250, 300, 350, 400]; %   [10, 20]; %
+plot_data.time_steps_to_post_process = linspace(1,n_time_steps,n_time_steps); % [1, 10, 20, 30, 40, 50, 100, 150, 200, 250, 300, 350, 400]; %      [10, 20]; %
 plot_data.file_name = strcat(problem_output.folder, '/poisson_adaptivity_Fachinotti400_nl_travelling_heat_source_lumped_2D_%d.vts');
 plot_data.file_name_mesh = strcat(problem_output.folder, '/poisson_adaptivity_Fachinotti400_nl_travelling_heat_source_lumped_2D_mesh_%d');
 plot_data.npoints_x = 201;        %number of points x-direction in post-processing

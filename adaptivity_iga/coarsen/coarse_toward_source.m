@@ -7,7 +7,7 @@ vertex = problem_data.path(time_step,:);
 
 % MARK ELEMENT OF THE FINER LEVEL CUTTED OR INCLUDED BY THE SOURCE REGION
 el_dir = zeros(3, 1);
-marked_element_index = cell(1, hmsh.nlevels);
+marked_element_index = cell(hmsh.nlevels, 1);
 for lev=1:hmsh.nlevels
     % get local points coordinates
     local_vertex_left = mapGlobalToLocal(vertex - adaptivity_data.radius * adaptivity_data.crp, msh_finer_lev);
@@ -36,7 +36,23 @@ for lev=1:hmsh.nlevels
             end
         end % END DIRECTION LOOP
         if ~isMarked
-            marked_element_index{lev} = [marked_element_index{lev} hmsh.active{lev}(el)];
+            if adaptivity_data.mark_neighbours
+                global_element_index = sub2ind(hmsh.mesh_of_level(lev).nel_dir, el_dir(1), el_dir(2), el_dir(3));
+                [~, flag]  = hmsh_get_neighbours( hmsh, lev, global_element_index );
+                % if neighbours of the same level and the level below are
+                % active, add the element in the marked list
+                toBeMarked = zeros(1, numel(flag));
+                for i=1:numel(flag)
+                    if (flag(i)>0 && isempty(intersect(hmsh.active{lev}(el), marked_element_index{lev})))
+                        toBeMarked(i) = 1;
+                    end
+                end
+                if isempty(find(~toBeMarked, 1))
+                   marked_element_index{lev} = [marked_element_index{lev} hmsh.active{lev}(el)];
+                end
+            else
+                marked_element_index{lev} = [marked_element_index{lev} hmsh.active{lev}(el)];
+            end
         end
     end % END ELEMENTS LOOP
 end % END LEVELS LOOP

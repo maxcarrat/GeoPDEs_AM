@@ -252,12 +252,6 @@ if (nargout == 2)
             
             % smoothing of active functions with support on reactiveted cells
             u_coarse{lev}(funs_to_reactivate{lev}) = smooth_dofs (hspace, hmsh, u_coarse_temp, funs_to_reactivate{lev}, lev);
-            
-            % ... else copy the level dof of the previous state
-        else
-            ndof_per_level_updated = cellfun (@numel, hspace.active);
-            ndof_until_lev = sum (ndof_per_level_updated(1:lev));
-            u_coarse{lev} = hspace.Csub{lev}*hspace.dofs(1:ndof_until_lev);
         end
         % end if
     end

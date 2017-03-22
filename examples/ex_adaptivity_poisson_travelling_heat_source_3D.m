@@ -19,7 +19,7 @@ problem_data.lumped = true;
 % Non-linear analysis
 problem_data.Newton_tol = 1.0e-06;
 problem_data.num_Newton_iter = 10;
-problem_data.non_linear_convergence_flag = 0;
+problem_data.non_linear_convergence_flag = 1;
 
 % Type of boundary conditions for each side of the domain
 problem_data.nmnn_sides   = [];
@@ -71,14 +71,15 @@ clear adaptivity_data
 adaptivity_data.flag = 'elements';
 adaptivity_data.doCoarsening = true;
 adaptivity_data.C0_est = 1.0;
-adaptivity_data.mark_param = 0.9;
-adaptivity_data.mark_param_coarsening = 0.1;
-adaptivity_data.crp = 1.0;                     %coarsening relaxation parameter
-adaptivity_data.radius = [0.015, 0.01, 0.02];
+adaptivity_data.mark_neighbours = true;
+adaptivity_data.mark_param = 0.8;
+adaptivity_data.mark_param_coarsening = 0.2;
+adaptivity_data.crp = 2.0;                     %coarsening relaxation parameter
+adaptivity_data.radius = [0.045, 0.03, 0.006];
 adaptivity_data.mark_strategy = 'MS';
-adaptivity_data.max_level = 4;
+adaptivity_data.max_level = 5;
 adaptivity_data.max_ndof = 10000;
-adaptivity_data.num_max_iter = 20;
+adaptivity_data.num_max_iter = 6;
 adaptivity_data.max_nel = 10000;
 adaptivity_data.tol = 2.5e-01;
 
@@ -88,11 +89,11 @@ plot_data.adaptivity = false;
 plot_data.print_info = true;
 plot_data.plot_matlab = false;
 plot_data.time_steps_to_post_process = linspace(1,n_time_steps,n_time_steps);%[1,5,10,15,20];%[1,25,50,75,100,125,150,175,200,250,300,350,400];%
-plot_data.file_name = strcat(problem_output.folder, '/poisson_adaptivity_Fachinotti_400_refine_coarse_source_3D_lumped_%d.vts');
-plot_data.file_name_mesh = strcat(problem_output.folder, '/poisson_adaptivity_Fachinotti_400_refine_coarse_source_3D_lumped_mesh_%d');
+plot_data.file_name = strcat(problem_output.folder, '/poisson_adaptivity_Fachinotti_400_refine_coarse_source_maxLevel5_3D_lumped_%d.vts');
+plot_data.file_name_mesh = strcat(problem_output.folder, '/poisson_adaptivity_Fachinotti_400_refine_coarse_source_maxLevel5_3D_lumped_mesh_%d');
 % plot_data.file_name_err = strcat(problem_output.folder, '/poisson_adaptivity_Fachinotti_travelling_heat_source_3D_error_%d.vts');
-plot_data.npoints_x = 101;        %number of points x-direction in post-processing
-plot_data.npoints_y = 51;        %number of points x-direction in post-processing
-plot_data.npoints_z = 11;        %number of points x-direction in post-processing
+plot_data.npoints_x = 201;        %number of points x-direction in post-processing
+plot_data.npoints_y = 101;        %number of points x-direction in post-processing
+plot_data.npoints_z = 21;         %number of points x-direction in post-processing
 
 [geometry, hmsh, hspace, u, solution_data] = adaptivity_poisson_transient(problem_data, method_data, adaptivity_data, plot_data);

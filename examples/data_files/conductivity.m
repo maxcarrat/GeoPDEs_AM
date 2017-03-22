@@ -9,7 +9,7 @@ for i=1:size(eu,1)
         if eu(i,j) >= 800
             k(i,j) =  34.0 * (eu(i,j)/800);
         else
-            k(i,j) =  34.0; % 26.7 * ((800-eu(i,j))/800);
+            k(i,j) =  34; % 26.7 * ((800-eu(i,j))/800);
         end
     end
 end

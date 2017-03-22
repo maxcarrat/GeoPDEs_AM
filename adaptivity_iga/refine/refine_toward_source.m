@@ -37,7 +37,24 @@ for lev=1:hmsh.nlevels
             end
         end % END DIRECTION LOOP
         if isMarked
+            % add element to the marked list
             marked_element_index{lev} = [marked_element_index{lev} hmsh.active{lev}(el)];
+            if adaptivity_data.mark_neighbours
+                % check if its neighbours are active
+                global_element_index = sub2ind(hmsh.mesh_of_level(lev).nel_dir, el_dir(1), el_dir(2), el_dir(3));
+                [neighbours, flag]  = hmsh_get_neighbours( hmsh, lev, global_element_index );
+                n_neighbours = numel(neighbours);
+                % if neighbours of the same level and the level below are
+                % active, add the element in the marked list.
+                % loop over neighbours
+                for i=1:n_neighbours
+                    % check if neighbour is of lower level...
+                    if (flag(i)>1)
+                        % ... and add it to the marked list
+                        marked_element_index{lev} = [marked_element_index{lev} neighbours(i)];
+                    end
+                end % end loop over neighbours
+            end
         end
     end % END ELEMENTS LOOP
 end % END LEVELS LOOP

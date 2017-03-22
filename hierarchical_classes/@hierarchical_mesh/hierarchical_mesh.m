@@ -30,6 +30,7 @@
 %    hmsh_refine:             refine the hierarchical mesh, given the set of cells to refine
 %    hmsh_get_children:       get the children of a given set of cells
 %    hmsh_get_parent:         get the parent of a given set of cells
+%    hmsh_get_neighbours:     get the elements of the neighbourhood of a given element
 %    hmsh_add_new_level:      add a new level to the mesh, the set of active cells is initialized as empty
 %    hmsh_remove_empty_level: remove the last level from the mesh, if it is empty
 %
