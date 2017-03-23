@@ -226,10 +226,8 @@ for itime = 1:number_ts-1
                 disp('REFINE')
             end
             [hmsh, hspace, Cref] = adaptivity_refine (hmsh, hspace, marked_ref, adaptivity_data);
-            
             % Project the previous solution mesh onto the next refined mesh
             if (plot_data.print_info); fprintf('Project old solution onto refined mesh \n \n'); end
-            
             % project dof onto new mesh
             u = Cref * u;
             % project last time step solution onto new mesh

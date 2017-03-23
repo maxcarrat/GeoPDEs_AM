@@ -12,6 +12,7 @@ mkdir(problem_output.folder);
 % if true the non-linear solver is used
 problem_data.flag_nl = true;
 problem_data.lumped = true;
+problem_data.non_linear_convergence_flag = 1;
 
 % Non-linear analysis
 problem_data.Newton_tol = 1.0e-05;
@@ -61,15 +62,16 @@ method_data.truncated   = 1;            % 0: False, 1: True
 clear adaptivity_data
 adaptivity_data.flag = 'elements';
 adaptivity_data.C0_est = 1.0;
+adaptivity_data.doCoarsening = true;
 adaptivity_data.mark_param = 0.75;
-adaptivity_data.mark_param_coarsening = 0.1;
+adaptivity_data.mark_param_coarsening = 0.25;
 adaptivity_data.mark_neighbours = true;
-adaptivity_data.crp = 2.5;                     %coarsening relaxation parameter
+adaptivity_data.crp = 1.5;                     %coarsening relaxation parameter
 adaptivity_data.mark_strategy = 'MS';
-adaptivity_data.radius = [0.003, 0.002];
+adaptivity_data.radius = [0.0015, 0.001];
 adaptivity_data.max_level = 8;
 adaptivity_data.max_ndof = 15000;
-adaptivity_data.num_max_iter = 5;
+adaptivity_data.num_max_iter = 9;
 adaptivity_data.max_nel = 15000;
 adaptivity_data.tol = 2.0e-01;
 

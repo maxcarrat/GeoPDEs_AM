@@ -12,6 +12,7 @@ mkdir(problem_output.folder);
 % if true the non-linear solver is used
 problem_data.flag_nl = true;
 problem_data.lumped = true;
+problem_data.non_linear_convergence_flag = 1;
 
 % Non-linear analysis
 problem_data.Newton_tol = 1.0e-05;
@@ -43,16 +44,17 @@ y_path = linspace(y_begin, y_end, n_time_steps+1);
 problem_data.path = [x_path', y_path'];
 
 % Source and boundary terms
-problem_data.f = moving_heat_source;        % Body Load
-problem_data.h = [];                        % Dirichlet Boundaries
-problem_data.g = [];                        % Neumann Boundaries
+problem_data.f =@(x,y,path_x,path_y)  3.0 * 3.0 * 58300.0/(pi * 0.0015 * 0.0010 ) * ...
+    exp(- 3*(x-path_x).^2/0.0015.^2 - 3*(y-path_y).^2/0.0010.^2 );       % Body Load
+problem_data.h = [];                                                     % Dirichlet Boundaries
+problem_data.g = [];                                                     % Neumann Boundaries
 
 % CHOICE OF THE DISCRETIZATION PARAMETERS (Coarse mesh)
 clear method_data
 method_data.degree      = [2 2];        % Degree of the splines
 method_data.regularity  = [1 1];        % Regularity of the splines
-method_data.nsub_coarse = [2^7 2^7];       % Number of subdivisions of the coarsest mesh, with respect to the mesh in geometry
-method_data.nsub_refine = [1 1];        % Number of subdivisions for each refinement
+method_data.nsub_coarse = [2^3 2^3];       % Number of subdivisions of the coarsest mesh, with respect to the mesh in geometry
+method_data.nsub_refine = [2 2];        % Number of subdivisions for each refinement
 method_data.nquad       = [3 3];        % Points for the Gaussian quadrature rule
 method_data.space_type  = 'standard';   % 'simplified' (only children functions) or 'standard' (full basis)
 method_data.truncated   = 1;            % 0: False, 1: True
@@ -60,16 +62,17 @@ method_data.truncated   = 1;            % 0: False, 1: True
 % ADAPTIVITY PARAMETERS
 clear adaptivity_data
 adaptivity_data.flag = 'elements';
-adaptivity_data.doCoarsening = false;
+adaptivity_data.doCoarsening = true;
+adaptivity_data.mark_neighbours = true;
 adaptivity_data.C0_est = 1.0;
-adaptivity_data.mark_param = 0.5;
+adaptivity_data.mark_param = 0.75;
 adaptivity_data.mark_param_coarsening = 0.25;
-adaptivity_data.crp = 10.0;                     %coarsening relaxation parameter
+adaptivity_data.crp = 2.0;                     %coarsening relaxation parameter
 adaptivity_data.mark_strategy = 'MS';
-adaptivity_data.radius = [0.05, 0.05];
-adaptivity_data.max_level = 8;
+adaptivity_data.radius = [0.05, 0.025];
+adaptivity_data.max_level = 5;
 adaptivity_data.max_ndof = 150000;
-adaptivity_data.num_max_iter = 10;
+adaptivity_data.num_max_iter = 6;
 adaptivity_data.max_nel = 150000;
 adaptivity_data.tol = 5.0e-01;
 

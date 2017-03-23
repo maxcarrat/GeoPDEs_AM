@@ -95,7 +95,7 @@ if ~isempty(problem_data.h)
     rhs(int_dofs) = rhs(int_dofs) * delta_t + mass_mat(int_dofs, int_dofs)*u_prev(int_dofs);
     
     % Solve the linear system
-    lhs = mass_mat(int_dofs, int_dofs) - stiff_mat(int_dofs, int_dofs) * delta_t;
+    lhs = mass_mat(int_dofs, int_dofs) + stiff_mat(int_dofs, int_dofs) * delta_t;
     u(int_dofs) =  lhs\ rhs(int_dofs);
 else
     delta_t = problem_data.time_discretization(time_step+1) - problem_data.time_discretization(time_step);
