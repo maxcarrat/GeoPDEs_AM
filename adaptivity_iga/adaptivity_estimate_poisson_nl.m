@@ -68,7 +68,7 @@ der2num = ders{3};
 [ders_0, ~] = hspace_eval_hmsh (u_0, hspace, hmsh, {'value'});
 num_0 = ders_0{1};
 
-delta_t = problem_data.time_discretization(time_step+1)-problem_data.time_discretization(time_step);
+delta_t = problem_data.time_discretization(2)-problem_data.time_discretization(1);
 
 x = cell (hmsh.rdim, 1);
 path = cell (hmsh.rdim, 1);

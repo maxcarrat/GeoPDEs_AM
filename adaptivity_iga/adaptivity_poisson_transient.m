@@ -125,17 +125,17 @@ u_last = u;
 
 
 %% BACKWARD EULER =========================================================
-for itime = 1:number_ts-1
+for itime = 1:number_ts
     
     % Initialization of some auxiliary variables
     if ~(isempty(find(plot_data.time_steps_to_post_process==itime, 1)))
         if (plot_data.plot_hmesh)
-            fig_mesh = figure(1+itime);
+            fig_mesh = figure(itime);
         end
     end
     
     if (plot_data.print_info)
-        fprintf('\n%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% Time step %d/%d %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%\n',itime,number_ts-1);
+        fprintf('\n%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% Time step %d/%d %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%\n',itime,number_ts);
     end
     
     
@@ -187,7 +187,7 @@ for itime = 1:number_ts-1
         gest(iter) = norm (est);
         if (plot_data.print_info); fprintf('Computed error estimator: %f \n', gest(iter)); end
         if (isfield (problem_data, 'graduex'))
-            [err_h1(iter), err_l2(iter), err_h1s(iter)] = sp_h1_error (hspace, hmsh, u(:,itime+1), problem_data.uex, problem_data.graduex);
+            [err_h1(iter), err_l2(iter), err_h1s(iter)] = sp_h1_error (hspace, hmsh, u(:,itime), problem_data.uex, problem_data.graduex);
             if (plot_data.print_info); fprintf('Error in H1 seminorm = %g\n', err_h1s(iter)); end
         end
         
@@ -205,43 +205,16 @@ for itime = 1:number_ts-1
             if (plot_data.print_info); disp('Warning: reached the maximum number of elements'); end;
             hspace.dofs = u;
             break;
-        elseif (iter >= adaptivity_data.num_max_iter)
+        elseif (iter > adaptivity_data.num_max_iter)
             if (plot_data.print_info); disp('Warning: reached the maximum number of iterations'); end;
             fprintf('non-convergence flag: %d \n', problem_data.non_linear_convergence_flag);
             hspace.dofs = u;
             break;
         end
-        
-        %% REFINEMENT =============================================================
-        % MARK REFINEMENT
-        if (plot_data.print_info); disp('MARK REFINEMENT:'); end
-        [marked_ref_err, num_marked_ref_err] = adaptivity_mark(est, hmsh, hspace, adaptivity_data);%cell(hmsh.nlevels, 1);% 
-        [marked_ref_geo, num_marked_ref_geo] = refine_toward_source (hmsh, hspace, itime, adaptivity_data, problem_data);
-        marked_ref = cellfun(@(marked_err,marked_geo) union(marked_err,marked_geo), marked_ref_err,marked_ref_geo,'UniformOutput',false);
-        
-        % REFINE
-        if (num_marked_ref_err~=0 || num_marked_ref_geo~=0)
-            if (plot_data.print_info)
-                fprintf('%d %s marked for refinement \n', num_marked_ref_geo + num_marked_ref_err, adaptivity_data.flag);
-                disp('REFINE')
-            end
-            [hmsh, hspace, Cref] = adaptivity_refine (hmsh, hspace, marked_ref, adaptivity_data);
-            % Project the previous solution mesh onto the next refined mesh
-            if (plot_data.print_info); fprintf('Project old solution onto refined mesh \n \n'); end
-            % project dof onto new mesh
-            u = Cref * u;
-            % project last time step solution onto new mesh
-            u_last = Cref * u_last;
-            % project error estimation onto new mesh
-            if strcmp(adaptivity_data.flag, 'functions')
-                est = Cref * est;
-            end;
-        end
-        
         %% COARSENING =============================================================
         % MARK COARSENING
         if (plot_data.print_info); disp('MARK COARSENING:'); end
-        [marked_coarse_err, num_marked_coarse_err] = marking_for_coarsening (est, hmsh, hspace, adaptivity_data);
+        marked_coarse_err = cell(hmsh.nlevels, 1); num_marked_coarse_err= 1;%[marked_coarse_err, num_marked_coarse_err] = marking_for_coarsening (est, hmsh, hspace, adaptivity_data);
         [marked_coarse_geo, num_marked_coarse_geo] = coarse_toward_source (hmsh, hspace, itime, adaptivity_data, problem_data);
         marked_coarse = cellfun(@(marked_err,marked_geo) union(marked_err,marked_geo), marked_coarse_err,marked_coarse_geo,'UniformOutput',false);
         
@@ -249,7 +222,7 @@ for itime = 1:number_ts-1
         % COARSE
         if (itime > 1 && (num_marked_coarse_err~=0 || num_marked_coarse_geo~=0))
             if (plot_data.print_info)
-                fprintf('%d %s marked for coarsening \n', num_marked_coarse_geo+num_marked_coarse_err, adaptivity_data.flag);
+                fprintf('%d %s marked for coarsening \n', num_marked_coarse_geo+num_marked_coarse_err-1, adaptivity_data.flag);
                 disp('COARSE')
             end
             % Project the previous solution mesh onto the next refined mesh
@@ -272,7 +245,33 @@ for itime = 1:number_ts-1
             hspace = hspace_coarse;
             hspace.dofs = u;
             
+        end        
+        %% REFINEMENT =============================================================
+        % MARK REFINEMENT
+        if (plot_data.print_info); disp('MARK REFINEMENT:'); end
+        marked_ref_err = cell(hmsh.nlevels, 1); num_marked_ref_err= 1;% [marked_ref_err, num_marked_ref_err] = adaptivity_mark(est, hmsh, hspace, adaptivity_data);%
+        [marked_ref_geo, num_marked_ref_geo] = refine_toward_source (hmsh, hspace, itime, adaptivity_data, problem_data);
+        marked_ref = cellfun(@(marked_err,marked_geo) union(marked_err,marked_geo), marked_ref_err,marked_ref_geo,'UniformOutput',false);
+        
+        % REFINE
+        if (num_marked_ref_err~=0 || num_marked_ref_geo~=0)
+            if (plot_data.print_info)
+                fprintf('%d %s marked for refinement \n', num_marked_ref_geo + num_marked_ref_err, adaptivity_data.flag);
+                disp('REFINE')
+            end
+            [hmsh, hspace, Cref] = adaptivity_refine (hmsh, hspace, marked_ref, adaptivity_data);
+            % Project the previous solution mesh onto the next refined mesh
+            if (plot_data.print_info); fprintf('Project old solution onto refined mesh \n \n'); end
+            % project dof onto new mesh
+            u = Cref * u;
+            % project last time step solution onto new mesh
+            u_last = Cref * u_last;
+            % project error estimation onto new mesh
+            if strcmp(adaptivity_data.flag, 'functions')
+                est = Cref * est;
+            end;
         end
+        
         
         %% ========================================================================
         
@@ -317,6 +316,14 @@ for itime = 1:number_ts-1
     %update last time step solution
     u_last = u;
     
+    fid = fopen (plot_data.file_name_dofs, 'w');
+    if (fid < 0)
+        error ('could not open file %s', plot_data.file_name_dofs);
+    end
+    
+    fprintf (fid, num2str(hspace.ndof));
+    fprintf (fid, '\n');
+
     
     solution_data.iter = iter;
     solution_data.gest = gest(1:iter);
@@ -333,6 +340,21 @@ for itime = 1:number_ts-1
         if (plot_data.print_info)
             fprintf('\n%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% Post-Process time step = %d %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%\n', itime);
         end
+        
+%         % PRINT TEMPERATURE ALONG THE LASER PATH
+%         output_file_temperature = sprintf(plot_data.file_name_temp_plot, itime);
+%         temp_file = fopen (output_file_temperature, 'w');
+%         if (fid < 0)
+%             error ('could not open file %s', output_file_temperature);
+%         end
+% %         laser_path = nrbline ([problem_data.x_begin problem_data.y_begin problem_data.z_begin],...
+% %             [problem_data.x_end problem_data.y_end problem_data.z_end]);
+% %         [lpath, ~, ~, ~, ~] = mp_geo_load (laser_path);
+% 
+%         [eu, ~] = sp_eval (u, hspace, geometry, [201 1 1]);
+% 
+%         fprintf (temp_file, '%f \n %f \n', itime, eu(:));
+        
         % EXPORT VTK FILE
         if (plot_data.print_info); fprintf('\n VTK Post-Process \n'); end
         npts = [plot_data.npoints_x plot_data.npoints_y plot_data.npoints_z];
@@ -373,5 +395,6 @@ for itime = 1:number_ts-1
      break;
     end
 end % END BACKWARD EULER LOOP
-
+ fclose(fid);
+%  fclose(temp_file);
 end

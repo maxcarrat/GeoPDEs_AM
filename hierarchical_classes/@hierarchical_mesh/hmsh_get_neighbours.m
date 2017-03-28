@@ -42,14 +42,37 @@
 %
 %    You should have received a copy of the GNU General Public License
 %    along with this program.  If not, see <http://www.gnu.org/licenses/>.
-function  [neighbours, index]  = hmsh_get_neighbours( hmsh, lev, ind )
+function  [neighbours, index]  = hmsh_get_neighbours( hmsh, lev, ind_x, ind_y, ind_z )
 neighbours = [];
 index = [];
 % get neighbours of the same level
-neighbours_x_dir = [ind-1, ind+1];
-neighbours_y_dir = [ind-hmsh.mesh_of_level(lev).nel_dir(1), ind+hmsh.mesh_of_level(lev).nel_dir(1)];
-neighbours_z_dir = [ind-hmsh.mesh_of_level(lev).nel_dir(1)*ind-hmsh.mesh_of_level(lev).nel_dir(2), ind-hmsh.mesh_of_level(lev).nel_dir(1)*ind-hmsh.mesh_of_level(lev).nel_dir(2)];
-% fill an auxiliary list of elements
+% x direction
+neighbours_x_dir = [ind_x-1, ind_x+1];
+for i=1:numel(neighbours_x_dir)
+    if (neighbours_x_dir(i)<=hmsh.mesh_of_level(lev).nel_dir(1) && neighbours_x_dir(i)~=0)
+        neighbours_x_dir(i) = sub2ind(hmsh.mesh_of_level(lev).nel_dir, neighbours_x_dir(i), ind_y, ind_z);
+    end
+end
+% y direction
+neighbours_y_dir = [];
+if numel(hmsh.mesh_of_level(lev).nel_dir(2)) > 1
+    neighbours_y_dir = [ind_y-1, ind_y+1];
+    for i=1:numel(neighbours_y_dir)
+        if(neighbours_y_dir(i)<=hmsh.mesh_of_level(lev).nel_dir(2)  && neighbours_y_dir(i)~=0)
+            neighbours_y_dir(i) = sub2ind(hmsh.mesh_of_level(lev).nel_dir, ind_x, neighbours_y_dir(i), ind_z);
+        end
+    end
+end
+% z direction
+neighbours_z_dir = [];
+if numel(hmsh.mesh_of_level(lev).nel_dir(3)) > 1
+    neighbours_z_dir = [ind_z-1, ind_z+1];
+    for i=1:numel(neighbours_z_dir)
+        if (neighbours_z_dir(i)<=hmsh.mesh_of_level(lev).nel_dir(3)  && neighbours_z_dir(i)~=0)
+            neighbours_z_dir(i) = sub2ind(hmsh.mesh_of_level(lev).nel_dir, ind_x, ind_y, neighbours_z_dir(i));% fill an auxiliary list of elements
+        end
+    end
+end
 aux = [neighbours_x_dir neighbours_y_dir neighbours_z_dir];
 % loop over auxiliary indeces
 for i=1:numel(aux)
@@ -59,11 +82,11 @@ for i=1:numel(aux)
         index = [index 2];
     else
         isMarked = 0;
-        if (lev > 1 && aux(i) > 0 && aux(i)<hmsh.mesh_of_level(lev).nel)
+        if (lev > 1 && aux(i)>0 && aux(i)<hmsh.mesh_of_level(lev).nel)
             [parent, ~] = hmsh_get_parent(hmsh, lev, aux(i));
             % check if parents are active
             if ~isempty(intersect(parent, hmsh.active{lev-1}))
-                neighbours = [neighbours aux(i)];
+                neighbours = [neighbours parent];
                 index = [index 1];
                 isMarked = 1;
             else
@@ -73,7 +96,7 @@ for i=1:numel(aux)
         elseif(lev < hmsh.nlevels && aux(i) > 0 && aux(i)<hmsh.mesh_of_level(lev).nel && ~isMarked)
             [children, ~] = hmsh_get_children(hmsh, lev, aux(i));
             if ~isempty(intersect(children, hmsh.active{lev+1}))
-                neighbours = [neighbours aux(i)];
+                neighbours = [neighbours children];
                 index = [index 3];
             else
                 neighbours = [neighbours aux(i)];

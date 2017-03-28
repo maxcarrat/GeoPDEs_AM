@@ -23,9 +23,9 @@ problem_data.nmnn_sides   = [];
 problem_data.drchlt_sides = [];
 
 % Physical parameters
-problem_data.c_diff  = @conductivity;%    @(x,y) ones(size(x)) * 29.0; % 
+problem_data.c_diff  = @conductivity; %  @(x,y) ones(size(x)) * 29.0; %    
 problem_data.grad_c_diff = @conductivity_der;%  @(x,y) cat (1,reshape (zeros(size(x)), [1, size(x)]), reshape (zeros(size(x)), [1, size(x)])); % 
-problem_data.c_cap = @capacity;% @(x,y) ones(size(x)) * 7820 * 600; %  
+problem_data.c_cap =  @(x,y) ones(size(x)) * 7820 * 600; %@capacity;% 
 problem_data.initial_temperature = 20;                  %[°C]
 
 
@@ -68,12 +68,12 @@ adaptivity_data.mark_param_coarsening = 0.25;
 adaptivity_data.mark_neighbours = true;
 adaptivity_data.crp = 1.5;                     %coarsening relaxation parameter
 adaptivity_data.mark_strategy = 'MS';
-adaptivity_data.radius = [0.0015, 0.001];
-adaptivity_data.max_level = 8;
+adaptivity_data.radius = [0.015, 0.01];
+adaptivity_data.max_level = 5;
 adaptivity_data.max_ndof = 15000;
-adaptivity_data.num_max_iter = 9;
+adaptivity_data.num_max_iter = 6;
 adaptivity_data.max_nel = 15000;
-adaptivity_data.tol = 2.0e-01;
+adaptivity_data.tol = 5.0e-01;
 
 % GRAPHICS
 plot_data.plot_hmesh = false;
@@ -81,11 +81,11 @@ plot_data.adaptivity = false;
 plot_data.plot_discrete_sol = false;
 plot_data.print_info = true;
 plot_data.plot_matlab = false;
-plot_data.time_steps_to_post_process = linspace(1,n_time_steps,n_time_steps); % [1, 10, 20, 30, 40, 50, 100, 150, 200, 250, 300, 350, 400]; %      [10, 20]; %
+plot_data.time_steps_to_post_process = linspace(1,n_time_steps,n_time_steps); % [1, 5, 15, 25, 35, 45, 50, 100, 150, 200, 250, 300, 350, 400]; %        [10, 20]; %
 plot_data.file_name = strcat(problem_output.folder, '/poisson_adaptivity_Fachinotti400_nl_travelling_heat_source_lumped_2D_%d.vts');
 plot_data.file_name_mesh = strcat(problem_output.folder, '/poisson_adaptivity_Fachinotti400_nl_travelling_heat_source_lumped_2D_mesh_%d');
-plot_data.npoints_x = 201;        %number of points x-direction in post-processing
-plot_data.npoints_y = 101;        %number of points y-direction in post-processing
+plot_data.npoints_x = 401;        %number of points x-direction in post-processing
+plot_data.npoints_y = 201;        %number of points y-direction in post-processing
 plot_data.npoints_z = 1;          %number of points z-direction in post-processing
 
 [geometry, hmsh, hspace, u, solution_data] = adaptivity_poisson_transient(problem_data, method_data, adaptivity_data, plot_data);

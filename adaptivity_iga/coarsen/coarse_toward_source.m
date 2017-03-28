@@ -18,17 +18,14 @@ for lev=1:hmsh.nlevels
         [el_dir(1), el_dir(2), el_dir(3)] = ind2sub(hmsh.mesh_of_level(lev).nel_dir, hmsh.active{lev}(el));
         % LOOP OVER DIRECTIONS
         for idir = 1:hmsh.rdim
-            degree_dir = hspace.space_of_level(lev).degree(idir);
-            knots_dir = hspace.space_of_level(lev).knots{idir};
+            knots_dir = unique(hspace.space_of_level(lev).knots{idir});
             % check if vertex is inside the knot-span in ith direction
-            if ((local_vertex_left(idir) > knots_dir(el_dir(idir)+degree_dir) &&... the source is contained within the knotspan
-                    local_vertex_right(idir) <= knots_dir(el_dir(idir)+degree_dir+1)) ||...
-                    (local_vertex_left(idir) < knots_dir(el_dir(idir)+degree_dir) &&... the knotspan is within the source
-                    local_vertex_right(idir) >= knots_dir(el_dir(idir)+degree_dir+1)) ||...
-                    (local_vertex_left(idir) < knots_dir(el_dir(idir)+degree_dir) &&... the knotspan is cutted by the source
-                    local_vertex_right(idir) >= knots_dir(el_dir(idir)+degree_dir)) ||...
-                    (local_vertex_left(idir) < knots_dir(el_dir(idir)+degree_dir+1) &&... the knotspan is cutted by the source
-                    local_vertex_right(idir) >= knots_dir(el_dir(idir)+degree_dir+1)))
+            if ((local_vertex_left(idir) > knots_dir(el_dir(idir)) &&... the source is contained within the knotspan
+                    local_vertex_right(idir) <= knots_dir(el_dir(idir)+1)) ||...
+                    (local_vertex_left(idir) <= knots_dir(el_dir(idir)) &&... the knotspan is cutted by the source
+                    local_vertex_right(idir) >= knots_dir(el_dir(idir))) ||...
+                    (local_vertex_left(idir) <= knots_dir(el_dir(idir)+1) &&... the knotspan is cutted by the source
+                    local_vertex_right(idir) >= knots_dir(el_dir(idir)+1)))
                 isMarked = 1;
             else
                 isMarked = 0;
@@ -37,8 +34,7 @@ for lev=1:hmsh.nlevels
         end % END DIRECTION LOOP
         if ~isMarked
             if adaptivity_data.mark_neighbours
-                global_element_index = sub2ind(hmsh.mesh_of_level(lev).nel_dir, el_dir(1), el_dir(2), el_dir(3));
-                [~, flag]  = hmsh_get_neighbours( hmsh, lev, global_element_index );
+                [~, flag]  = hmsh_get_neighbours( hmsh, lev, el_dir(1), el_dir(2), el_dir(3) );
                 % if neighbours of the same level and the level below are
                 % active, add the element in the marked list
                 toBeMarked = zeros(1, numel(flag));

@@ -52,6 +52,8 @@ iter = 0;
 u = u_0;
 res = 1.0;
 problem_data.non_linear_convergence_flag = 0;
+% assume homogeneus time discretization
+delta_t = problem_data.time_discretization(2) - problem_data.time_discretization(1);
 
 while (norm(res) > problem_data.Newton_tol)
     iter = iter + 1;
@@ -102,9 +104,7 @@ while (norm(res) > problem_data.Newton_tol)
         u = zeros (hspace.ndof, 1);
         [u_dirichlet, dirichlet_dofs] = sp_drchlt_l2_proj (hspace, hmsh, problem_data.h, problem_data.drchlt_sides);
         u(dirichlet_dofs) = u_dirichlet;
-        
         int_dofs = setdiff (1:hspace.ndof, dirichlet_dofs);
-        delta_t = problem_data.time_discretization(time_step+1) - problem_data.time_discretization(time_step);
         
         %residuum
         if (plot_data.print_info)
@@ -132,7 +132,6 @@ while (norm(res) > problem_data.Newton_tol)
         end
     else
         
-        delta_t = problem_data.time_discretization(time_step+1) - problem_data.time_discretization(time_step);
         
         %residuum
         if (plot_data.print_info)

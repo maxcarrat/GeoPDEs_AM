@@ -32,15 +32,15 @@ problem_data.initial_temperature = 20;                  %[°C]
 % Time discretization
 n_time_steps = 20;
 time_end = 20;
-problem_data.time_discretization = linspace(0.0, time_end, n_time_steps + 1);
+problem_data.time_discretization = [linspace(0.0, time_end, n_time_steps)];
 
 % Heat Source path
 x_begin = 0.05;
 x_end = 0.15;
-x_path = linspace(x_begin, x_end, n_time_steps+1);
+x_path = linspace(x_begin, x_end, n_time_steps);
 y_begin = 0.05;
 y_end = 0.05;
-y_path = linspace(y_begin, y_end, n_time_steps+1);
+y_path = linspace(y_begin, y_end, n_time_steps);
 problem_data.path = [x_path', y_path'];
 
 % Source and boundary terms
@@ -65,11 +65,11 @@ adaptivity_data.flag = 'elements';
 adaptivity_data.C0_est = 1.0;
 adaptivity_data.mark_param = 0.75;
 adaptivity_data.mark_param_coarsening = 0.1;
-adaptivity_data.mark_neighbours = true;
-adaptivity_data.crp = 1.5;                     %coarsening relaxation parameter
+adaptivity_data.mark_neighbours = false;
+adaptivity_data.crp = 1.0;                     %coarsening relaxation parameter
 adaptivity_data.mark_strategy = 'MS';
 adaptivity_data.radius = [0.015, 0.01];
-adaptivity_data.max_level = 5;
+adaptivity_data.max_level = 6;
 adaptivity_data.max_ndof = 15000;
 adaptivity_data.num_max_iter = 6;
 adaptivity_data.max_nel = 15000;
@@ -84,6 +84,7 @@ plot_data.plot_matlab = false;
 plot_data.time_steps_to_post_process = [1, 5, 10, 15, 20]; %linspace(1,n_time_steps,n_time_steps); % [1, 10, 20, 30, 40, 50, 100, 150, 200, 250, 300, 350, 400]; %      
 plot_data.file_name = strcat(problem_output.folder, '/poisson_adaptivity_Fachinotti20_travelling_heat_source_lumped_2D_%d.vts');
 plot_data.file_name_mesh = strcat(problem_output.folder, '/poisson_adaptivity_Fachinotti20_travelling_heat_source_lumped_2D_mesh_%d');
+plot_data.file_name_dofs = strcat(problem_output.folder, '/poisson_adaptivity_Fachinotti20_travelling_heat_source_lumped_2D_DOFS_%d');
 plot_data.npoints_x = 201;        %number of points x-direction in post-processing
 plot_data.npoints_y = 101;        %number of points y-direction in post-processing
 plot_data.npoints_z = 1;          %number of points z-direction in post-processing

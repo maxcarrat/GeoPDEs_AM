@@ -18,18 +18,14 @@ for lev=1:hmsh.nlevels
         [el_dir(1), el_dir(2), el_dir(3)] = ind2sub(hmsh.mesh_of_level(lev).nel_dir, hmsh.active{lev}(el));
         % LOOP OVER DIRECTIONS
         for idir = 1:hmsh.rdim
-            degree_dir = hspace.space_of_level(lev).degree(idir);
-            knots_dir = hspace.space_of_level(lev).knots{idir};
-            % check if vertex is inside the knot-span in ith direction
-            if (((local_vertex_left(idir) > knots_dir(el_dir(idir)+degree_dir) &&... the source is contained within the knotspan
-                    local_vertex_right(idir) <= knots_dir(el_dir(idir)+degree_dir+1)) ||...
-                    (local_vertex_left(idir) < knots_dir(el_dir(idir)+degree_dir) &&... the knotspan is within the source
-                    local_vertex_right(idir) >= knots_dir(el_dir(idir)+degree_dir+1)) ||...
-                    (local_vertex_left(idir) < knots_dir(el_dir(idir)+degree_dir) &&... the knotspan is cutted by the source
-                    local_vertex_right(idir) >= knots_dir(el_dir(idir)+degree_dir)) ||...
-                    (local_vertex_left(idir) < knots_dir(el_dir(idir)+degree_dir+1) &&... the knotspan is cutted by the source
-                    local_vertex_right(idir) >= knots_dir(el_dir(idir)+degree_dir+1))) && ...  is not the max level
-                    lev <= adaptivity_data.max_level )
+            knots_dir = unique(hspace.space_of_level(lev).knots{idir});
+            if (((local_vertex_left(idir) > knots_dir(el_dir(idir)) &&... the source is contained within the knotspan
+                    local_vertex_right(idir) <= knots_dir(el_dir(idir)+1)) ||...
+                    (local_vertex_left(idir) < knots_dir(el_dir(idir)) &&... the knotspan is cutted by the source
+                    local_vertex_right(idir) >= knots_dir(el_dir(idir))) ||...
+                    (local_vertex_left(idir) < knots_dir(el_dir(idir)+1) &&... the knotspan is cutted by the source
+                    local_vertex_right(idir) >= knots_dir(el_dir(idir)+1))) && ...  is not the max level
+                    lev < adaptivity_data.max_level )
                 isMarked = 1;
             else
                 isMarked = 0;
@@ -41,17 +37,24 @@ for lev=1:hmsh.nlevels
             marked_element_index{lev} = [marked_element_index{lev} hmsh.active{lev}(el)];
             if adaptivity_data.mark_neighbours
                 % check if its neighbours are active
-                global_element_index = sub2ind(hmsh.mesh_of_level(lev).nel_dir, el_dir(1), el_dir(2), el_dir(3));
-                [neighbours, flag]  = hmsh_get_neighbours( hmsh, lev, global_element_index );
+                [neighbours, flag]  = hmsh_get_neighbours( hmsh, lev, el_dir(1), el_dir(2), el_dir(3) );
                 n_neighbours = numel(neighbours);
                 % if neighbours of the same level and the level below are
                 % active, add the element in the marked list.
                 % loop over neighbours
                 for i=1:n_neighbours
-                    % check if neighbour is of lower level...
-                    if (flag(i)>1)
+                    % check if neighbour is of the same level...
+                    if (flag(i)==2)
                         % ... and add it to the marked list
                         marked_element_index{lev} = [marked_element_index{lev} neighbours(i)];
+                    % ... is of a lower level ...
+                    elseif (flag(i)==1)
+                            % ... and add it to the marked list
+                            marked_element_index{lev-1} = [marked_element_index{lev-1} neighbours(i)];
+                    % ... is of a higher level ...
+                    elseif (flag(i)==3)
+                            % ... and add it to the marked list
+                            marked_element_index{lev+1} = [marked_element_index{lev+1} neighbours(i)];
                     end
                 end % end loop over neighbours
             end

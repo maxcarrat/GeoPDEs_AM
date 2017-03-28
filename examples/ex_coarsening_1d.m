@@ -4,7 +4,7 @@
 % PHYSICAL DATA OF THE PROBLEM
 clear problem_data
 clc
-% Physical domain, defined as NURBS map given in a text file
+% Physical domain, defined as NURBS map
 problem_data.geo_name = nrbline ([0 0], [0.5 0]);
 % Generate Output folder
 problem_output.folder = '~/workspace/GeoPDEs_AM.git/trunk/output';

@@ -46,7 +46,9 @@
 %    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 function u = adaptivity_solve_poisson_transient (hmsh, hspace, time_step, problem_data, u_prev)
-
+%Assume homogeneous time discretization
+delta_t = problem_data.time_discretization(2) - problem_data.time_discretization(1);
+%Assembly linear system
 stiff_mat = op_gradu_gradv_hier (hspace, hspace, hmsh, problem_data.c_diff);
 mass_mat = op_u_v_hier(hspace, hspace, hmsh, problem_data.c_cap);
 %lumped mass matrix
@@ -89,7 +91,6 @@ if ~isempty(problem_data.h)
     u = zeros (hspace.ndof, 1);
     [u_dirichlet, dirichlet_dofs] = sp_drchlt_l2_proj (hspace, hmsh, problem_data.h, problem_data.drchlt_sides);
     u(dirichlet_dofs) = u_dirichlet;
-    delta_t = problem_data.time_discretization(time_step)-problem_data.time_discretization(time_step+1);
     
     int_dofs = setdiff (1:hspace.ndof, dirichlet_dofs);
     rhs(int_dofs) = rhs(int_dofs) * delta_t + mass_mat(int_dofs, int_dofs)*u_prev(int_dofs);
@@ -98,7 +99,6 @@ if ~isempty(problem_data.h)
     lhs = mass_mat(int_dofs, int_dofs) + stiff_mat(int_dofs, int_dofs) * delta_t;
     u(int_dofs) =  lhs\ rhs(int_dofs);
 else
-    delta_t = problem_data.time_discretization(time_step+1) - problem_data.time_discretization(time_step);
     rhs = rhs * delta_t + mass_mat * u_prev;
     
     % Solve the linear system
