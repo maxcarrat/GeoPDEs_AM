@@ -211,6 +211,33 @@ for itime = 1:number_ts
             hspace.dofs = u;
             break;
         end
+      
+        %% REFINEMENT =============================================================
+        % MARK REFINEMENT
+        if (plot_data.print_info); disp('MARK REFINEMENT:'); end
+        marked_ref_err = cell(hmsh.nlevels, 1); num_marked_ref_err= 1;% [marked_ref_err, num_marked_ref_err] = adaptivity_mark(est, hmsh, hspace, adaptivity_data);%
+        [marked_ref_geo, num_marked_ref_geo] = refine_toward_source (hmsh, hspace, itime, adaptivity_data, problem_data);
+        marked_ref = cellfun(@(marked_err,marked_geo) union(marked_err,marked_geo), marked_ref_err,marked_ref_geo,'UniformOutput',false);
+        
+        % REFINE
+        if (num_marked_ref_err~=0 || num_marked_ref_geo~=0)
+            if (plot_data.print_info)
+                fprintf('%d %s marked for refinement \n', num_marked_ref_geo + num_marked_ref_err, adaptivity_data.flag);
+                disp('REFINE')
+            end
+            [hmsh, hspace, Cref] = adaptivity_refine (hmsh, hspace, marked_ref, adaptivity_data);
+            % Project the previous solution mesh onto the next refined mesh
+            if (plot_data.print_info); fprintf('Project old solution onto refined mesh \n \n'); end
+            % project dof onto new mesh
+            u = Cref * u;
+            % project last time step solution onto new mesh
+            u_last = Cref * u_last;
+            % project error estimation onto new mesh
+            if strcmp(adaptivity_data.flag, 'functions')
+                est = Cref * est;
+            end;
+        end
+        
         %% COARSENING =============================================================
         % MARK COARSENING
         if (plot_data.print_info); disp('MARK COARSENING:'); end
@@ -245,34 +272,7 @@ for itime = 1:number_ts
             hspace = hspace_coarse;
             hspace.dofs = u;
             
-        end        
-        %% REFINEMENT =============================================================
-        % MARK REFINEMENT
-        if (plot_data.print_info); disp('MARK REFINEMENT:'); end
-        marked_ref_err = cell(hmsh.nlevels, 1); num_marked_ref_err= 1;% [marked_ref_err, num_marked_ref_err] = adaptivity_mark(est, hmsh, hspace, adaptivity_data);%
-        [marked_ref_geo, num_marked_ref_geo] = refine_toward_source (hmsh, hspace, itime, adaptivity_data, problem_data);
-        marked_ref = cellfun(@(marked_err,marked_geo) union(marked_err,marked_geo), marked_ref_err,marked_ref_geo,'UniformOutput',false);
-        
-        % REFINE
-        if (num_marked_ref_err~=0 || num_marked_ref_geo~=0)
-            if (plot_data.print_info)
-                fprintf('%d %s marked for refinement \n', num_marked_ref_geo + num_marked_ref_err, adaptivity_data.flag);
-                disp('REFINE')
-            end
-            [hmsh, hspace, Cref] = adaptivity_refine (hmsh, hspace, marked_ref, adaptivity_data);
-            % Project the previous solution mesh onto the next refined mesh
-            if (plot_data.print_info); fprintf('Project old solution onto refined mesh \n \n'); end
-            % project dof onto new mesh
-            u = Cref * u;
-            % project last time step solution onto new mesh
-            u_last = Cref * u_last;
-            % project error estimation onto new mesh
-            if strcmp(adaptivity_data.flag, 'functions')
-                est = Cref * est;
-            end;
-        end
-        
-        
+        end          
         %% ========================================================================
         
         if (plot_data.adaptivity)

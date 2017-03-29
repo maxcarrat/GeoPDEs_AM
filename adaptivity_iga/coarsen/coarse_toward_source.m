@@ -20,7 +20,7 @@ for lev=1:hmsh.nlevels
         for idir = 1:hmsh.rdim
             knots_dir = unique(hspace.space_of_level(lev).knots{idir});
             % check if vertex is inside the knot-span in ith direction
-            if ((local_vertex_left(idir) > knots_dir(el_dir(idir)) &&... the source is contained within the knotspan
+            if ((local_vertex_left(idir) >= knots_dir(el_dir(idir)) &&... the source is contained within the knotspan
                     local_vertex_right(idir) <= knots_dir(el_dir(idir)+1)) ||...
                     (local_vertex_left(idir) <= knots_dir(el_dir(idir)) &&... the knotspan is cutted by the source
                     local_vertex_right(idir) >= knots_dir(el_dir(idir))) ||...

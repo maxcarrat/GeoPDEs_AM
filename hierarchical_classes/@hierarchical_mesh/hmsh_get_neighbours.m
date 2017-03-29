@@ -53,9 +53,10 @@ for i=1:numel(neighbours_x_dir)
         neighbours_x_dir(i) = sub2ind(hmsh.mesh_of_level(lev).nel_dir, neighbours_x_dir(i), ind_y, ind_z);
     end
 end
+neighbours_x_dir = unique(neighbours_x_dir(neighbours_x_dir>0));
 % y direction
 neighbours_y_dir = [];
-if numel(hmsh.mesh_of_level(lev).nel_dir(2)) > 1
+if numel(hmsh.mesh_of_level(lev).nel_dir) > 1
     neighbours_y_dir = [ind_y-1, ind_y+1];
     for i=1:numel(neighbours_y_dir)
         if(neighbours_y_dir(i)<=hmsh.mesh_of_level(lev).nel_dir(2)  && neighbours_y_dir(i)~=0)
@@ -63,9 +64,10 @@ if numel(hmsh.mesh_of_level(lev).nel_dir(2)) > 1
         end
     end
 end
+neighbours_y_dir = unique(neighbours_y_dir(neighbours_y_dir>0));
 % z direction
 neighbours_z_dir = [];
-if numel(hmsh.mesh_of_level(lev).nel_dir(3)) > 1
+if numel(hmsh.mesh_of_level(lev).nel_dir) > 2
     neighbours_z_dir = [ind_z-1, ind_z+1];
     for i=1:numel(neighbours_z_dir)
         if (neighbours_z_dir(i)<=hmsh.mesh_of_level(lev).nel_dir(3)  && neighbours_z_dir(i)~=0)
@@ -73,7 +75,10 @@ if numel(hmsh.mesh_of_level(lev).nel_dir(3)) > 1
         end
     end
 end
+neighbours_z_dir = unique(neighbours_z_dir(neighbours_z_dir~=0));
+
 aux = [neighbours_x_dir neighbours_y_dir neighbours_z_dir];
+aux = unique(aux);
 % loop over auxiliary indeces
 for i=1:numel(aux)
     % check if neighbours are active
@@ -93,15 +98,15 @@ for i=1:numel(aux)
                 neighbours = [neighbours aux(i)];
                 index = [index 0];
             end
-        elseif(lev < hmsh.nlevels && aux(i) > 0 && aux(i)<hmsh.mesh_of_level(lev).nel && ~isMarked)
-            [children, ~] = hmsh_get_children(hmsh, lev, aux(i));
-            if ~isempty(intersect(children, hmsh.active{lev+1}))
-                neighbours = [neighbours children];
-                index = [index 3];
-            else
-                neighbours = [neighbours aux(i)];
-                index = [index 0];
-            end
+%         elseif(lev < hmsh.nlevels && aux(i) > 0 && aux(i)<hmsh.mesh_of_level(lev).nel && ~isMarked)
+%             [children, ~] = hmsh_get_children(hmsh, lev, aux(i));
+%             if ~isempty(intersect(children, hmsh.active{lev+1}))
+%                 neighbours = [neighbours children];
+%                 index = [index 3];
+%             else
+%                 neighbours = [neighbours aux(i)];
+%                 index = [index 0];
+%             end
         end
     end % end if
 end % end for loop
