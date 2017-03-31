@@ -101,7 +101,6 @@ while (norm(res) > problem_data.Newton_tol)
     
     % Apply Dirichlet boundary conditions
     if ~isempty(problem_data.h)
-        u = zeros (hspace.ndof, 1);
         [u_dirichlet, dirichlet_dofs] = sp_drchlt_l2_proj (hspace, hmsh, problem_data.h, problem_data.drchlt_sides);
         u(dirichlet_dofs) = u_dirichlet;
         int_dofs = setdiff (1:hspace.ndof, dirichlet_dofs);
@@ -110,8 +109,10 @@ while (norm(res) > problem_data.Newton_tol)
         if (plot_data.print_info)
             fprintf('\n \t Assembly residuum vector');
         end
-        res = rhs(int_dofs) * delta_t - stiff_mat(int_dofs, dirichlet_dofs)*u(dirichlet_dofs) * delta_t +...
-            mass_mat(int_dofs, int_dofs)*u_0(int_dofs) - mass_mat(int_dofs, int_dofs)*u(int_dofs);
+        rhs(int_dofs) = rhs(int_dofs)* delta_t - stiff_mat(int_dofs, dirichlet_dofs)*u(dirichlet_dofs)* delta_t +...
+            mass_mat(int_dofs, int_dofs)*u_0(int_dofs) - mass_mat(int_dofs, dirichlet_dofs)*u(dirichlet_dofs); 
+        
+        res = rhs(int_dofs)- stiff_mat(int_dofs, int_dofs)*u(int_dofs) * delta_t  - mass_mat(int_dofs, int_dofs)*u(int_dofs);
         
         %jacobian of the residuum
         if (plot_data.print_info)

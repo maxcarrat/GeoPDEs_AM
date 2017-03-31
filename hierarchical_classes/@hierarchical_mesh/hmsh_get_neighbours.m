@@ -78,7 +78,7 @@ end
 neighbours_z_dir = unique(neighbours_z_dir(neighbours_z_dir~=0));
 
 aux = [neighbours_x_dir neighbours_y_dir neighbours_z_dir];
-aux = unique(aux);
+% aux = unique(aux);
 % loop over auxiliary indeces
 for i=1:numel(aux)
     % check if neighbours are active
@@ -98,15 +98,18 @@ for i=1:numel(aux)
                 neighbours = [neighbours aux(i)];
                 index = [index 0];
             end
-%         elseif(lev < hmsh.nlevels && aux(i) > 0 && aux(i)<hmsh.mesh_of_level(lev).nel && ~isMarked)
-%             [children, ~] = hmsh_get_children(hmsh, lev, aux(i));
-%             if ~isempty(intersect(children, hmsh.active{lev+1}))
-%                 neighbours = [neighbours children];
-%                 index = [index 3];
-%             else
-%                 neighbours = [neighbours aux(i)];
-%                 index = [index 0];
-%             end
+        elseif(lev < hmsh.nlevels && aux(i) > 0 && aux(i)<hmsh.mesh_of_level(lev).nel && ~isMarked)
+            [children, ~] = hmsh_get_children(hmsh, lev, aux(i));
+            if ~isempty(intersect(children, hmsh.active{lev+1}))
+                neighbours = [neighbours children'];
+                index = [index 3];
+            else
+                neighbours = [neighbours aux(i)];
+                index = [index 0];
+            end
+        else
+            neighbours = [neighbours aux(i)];
+            index = [index 0];
         end
     end % end if
 end % end for loop
